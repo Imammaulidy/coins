@@ -1,0 +1,73 @@
+﻿================================================================
+   COINS.PH PAYMENT GATEWAY - PANDUAN PENGGUNAAN LENGKAP
+   Coins.ph Dynamic QR Ph & Web3 Multi-Network Wallet
+================================================================
+Versi     : 3.0 (Pure Dynamic QR Ph Filipina & Web3 Multi-Network)
+Tanggal   : 2026-09-04
+================================================================
+
+KETERANGAN SISTEM
+-----------------
+Aplikasi ini adalah POS Kasir Web & Payment Gateway mandiri resmi standar nasional Filipina:
+1. 🇵🇭 Dynamic QR Ph Filipina (Coins.ph & InstaPay P2P):
+   - Dynamic QR generation dengan nominal terkunci otomatis
+   - Auto-Increment nominal unik (+₱0.01) untuk membedakan pembayaran pembeli
+   - Generator acak 500M+ kombinasi nama merchant Filipina
+   - Multi-slot akun merchant Coins.ph
+
+2. ⚡ Web3 Multi-Network Wallet Transfer (Direct POS Sender):
+   - 🔵 Base Network: USDC (Decimals: 6)
+   - 🟡 BSC Network (BEP-20): USDT (Decimals: 18)
+   - 🟢 BSC Network (BEP-20): USDC (Decimals: 18)
+   - Live Rate Engine (Base Rate + Buffer pengaman swap Bitget)
+   - Pemindai Barcode Address via Kamera & Upload Gambar
+
+================================================================
+BAGIAN 1: CARA INSTALL DAN JALANKAN DI PC / LAPTOP (WINDOWS)
+================================================================
+
+PERSYARATAN:
+- Windows 10 / 11 (64-bit)
+- Koneksi internet
+
+LANGKAH 1: INSTALL PYTHON (JIKA BELUM ADA)
+1. Buka browser, kunjungi: https://www.python.org/downloads/
+2. Download versi Python 3.11 atau lebih baru.
+3. Saat instalasi, WAJIB CENTANG "Add Python to PATH".
+4. Klik "Install Now" dan tunggu hingga selesai.
+
+LANGKAH 2: INSTALL DEPENDENSI (HANYA SEKALI DI AWAL)
+1. Double-click file: INSTALL_REQUIREMENTS.bat
+2. Tunggu hingga muncul tulisan "Instalasi selesai!".
+
+LANGKAH 3: JALANKAN SERVER
+1. Double-click file: START_SERVER.bat
+2. Server akan otomatis mendeteksi IP lokal PC Anda (contoh: http://192.168.1.14:5000/pos).
+3. Browser akan otomatis membuka halaman POS Kasir lewat IP:PORT tersebut.
+
+AKSES HALAMAN
+-------------
+- POS Kasir (PC / HP / Tablet) : http://<IP_KOMPUTER>:5000/pos
+- Dashboard Riwayat Transaksi  : http://<IP_KOMPUTER>:5000/dashboard
+- Live Kurs Rate Engine        : http://<IP_KOMPUTER>:5000/api/rate
+- REST API Create Payment      : http://<IP_KOMPUTER>:5000/api/payment/create
+- Web3 Wallet API Status       : http://<IP_KOMPUTER>:5000/api/wallet/status
+
+(Ganti <IP_KOMPUTER> dengan IP lokal yang tertera di jendela CMD server, contoh: 192.168.1.14)
+
+================================================================
+BAGIAN 2: CARA INSTALL DAN JALANKAN DI TERMUX (ANDROID)
+================================================================
+1. Download Termux dari F-Droid: https://f-droid.org/packages/com.termux/
+2. Buka Termux dan jalankan update:
+   $ pkg update -y
+3. Salin folder COINS_PAYMENT_GATEWAY ke Termux:
+   $ cp -r /sdcard/COINS_PAYMENT_GATEWAY ~/COINS_PAYMENT_GATEWAY
+4. Masuk ke folder TERMUX:
+   $ cd ~/COINS_PAYMENT_GATEWAY/TERMUX
+5. Install dependensi:
+   $ bash termuxsetup.sh
+6. Jalankan server:
+   $ bash run.sh
+7. Buka browser dan akses kasir via IP:PORT Termux:
+   http://<IP_HP>:5000/pos

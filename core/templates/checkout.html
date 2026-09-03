@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pembayaran QR Ph - Invoice #{{ order.order_id }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0052ff;
+            --success: #10b981;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #0f172a 100%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 30px 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .checkout-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 480px;
+            padding: 32px 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checkout-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #0052ff, #38bdf8, #10b981);
+        }
+
+        .merchant-header {
+            margin-bottom: 20px;
+        }
+
+        .badge-instapay {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 82, 255, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .amount-tag {
+            font-size: 38px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .amount-tag span {
+            color: var(--accent);
+            font-size: 28px;
+        }
+
+        .order-meta {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .qr-wrapper {
+            background: #fff;
+            padding: 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .qr-wrapper img {
+            width: 230px;
+            height: 230px;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .beneficiary-info {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .beneficiary-info .name {
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .beneficiary-info .bank {
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .supported-wallets {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .wallet-pills {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .wallet-pill {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .status-container {
+            margin-top: 16px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-paid {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            font-size: 16px;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: blink 1.2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .paid-screen {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .checkmark-circle {
+            width: 80px;
+            height: 80px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: #10b981;
+            font-size: 40px;
+            animation: bounceIn 0.6s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="checkout-card">
+    <div id="unpaidSection">
+        <div class="merchant-header">
+            <div class="badge-instapay">
+                <span>🛡️ QR Ph &bull; InstaPay Official</span>
+            </div>
+            <div class="amount-tag"><span>₱</span>{{ "%.2f"|format(order.amount) }}</div>
+            <div class="order-meta">Invoice: <b>#{{ order.order_id }}</b> {% if order.note %}&bull; {{ order.note }}{% endif %}</div>
+        </div>
+
+        <div class="qr-wrapper">
+            <img src="{{ qr_image_base64 }}" alt="QR Ph InstaPay">
+        </div>
+
+        <div class="beneficiary-info">
+            <div>
+                <div style="font-size: 11px; color: var(--muted);">PENERIMA PEMBAYARAN</div>
+                <div class="name">{{ config.account.name }}</div>
+            </div>
+            <div style="text-align: right;">
+                <div class="bank">{{ config.account.bank_name }}</div>
+                <div style="font-size: 11px; color: var(--muted);">{{ config.account.phone_masked }}</div>
+            </div>
+        </div>
+
+        <div class="status-container">
+            <div class="status-pill status-pending" id="statusPill">
+                <div class="pulse"></div>
+                <span id="statusText">MENUNGGU PEMBAYARAN</span>
+            </div>
+        </div>
+
+        <div class="supported-wallets">
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Didukung oleh Semua Aplikasi Perbankan:</div>
+            <div class="wallet-pills">
+                <div class="wallet-pill">GCash</div>
+                <div class="wallet-pill">Maya</div>
+                <div class="wallet-pill">Coins.ph</div>
+                <div class="wallet-pill">BDO</div>
+                <div class="wallet-pill">BPI</div>
+                <div class="wallet-pill">GoTyme</div>
+                <div class="wallet-pill">ShopeePay</div>
+                <div class="wallet-pill">Seabank</div>
+                <div class="wallet-pill">UnionBank</div>
+                <div class="wallet-pill">GrabPay</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Screen (Shown when PAID) -->
+    <div id="paidSection" class="paid-screen">
+        <div class="checkmark-circle">✓</div>
+        <h2 style="font-size: 24px; color: #fff; margin-bottom: 8px;">Pembayaran Berhasil!</h2>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Terima kasih, pembayaran sebesar <b>₱{{ "%.2f"|format(order.amount) }}</b> telah kami terima.</p>
+        <div class="status-pill status-paid">
+            <span>✅ STATUS: LUNAS (PAID)</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const orderId = "{{ order.order_id }}";
+    let pollInterval = setInterval(checkStatus, 2000);
+
+    async function checkStatus() {
+        try {
+            const res = await fetch('/api/payment/' + orderId);
+            const data = await res.json();
+            if (data.success && data.order && data.order.status === 'PAID') {
+                document.getElementById('unpaidSection').style.display = 'none';
+                document.getElementById('paidSection').style.display = 'block';
+                clearInterval(pollInterval);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+</script>
+
+</body>
+</html>

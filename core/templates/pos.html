@@ -1,0 +1,2016 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coins.ph QR Ph Payment Hub - Dynamic QR & Web3 Transfer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/static/jsqr.js"></script>
+    <style>
+:root {
+            --primary: #0052ff;
+            --primary-dark: #003dbb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #090d16;
+            --card-bg: #131d31;
+            --card-inner: #0b1120;
+            --card-border: #223252;
+            --text-main: #f8fafc;
+            --text-muted: #8e9eb5;
+            --accent: #38bdf8;
+            --usdc-blue: #2775ca;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body {
+            background: radial-gradient(circle at top, #111e38 0%, #090d16 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 12px 14px 28px;
+        }
+
+        /* TOP NAVBAR (MINIMALIS) */
+        .top-navbar {
+            max-width: 1400px;
+            margin: 0 auto 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .nav-left { display: flex; align-items: center; gap: 12px; }
+        .btn-hamburger {
+            background: var(--card-inner);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            color: #fff;
+            width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-hamburger:hover {
+            border-color: var(--accent);
+            background: rgba(56,189,248,0.15);
+            color: var(--accent);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; }
+        .logo-icon-mini {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #0052ff, #38bdf8);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 800; color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 82, 255, 0.4);
+        }
+        .brand-text { display: flex; flex-direction: column; }
+        .brand-name { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.3px; line-height: 1.2; }
+        .brand-sub { font-size: 10px; color: var(--text-muted); }
+
+        .nav-right { display: flex; align-items: center; gap: 10px; }
+        .rate-pill {
+            background: var(--card-inner);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 5px 12px;
+            display: flex; align-items: center; gap: 6px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        .rate-pill:hover { border-color: var(--accent); }
+        .dot-live {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+        .rate-text { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+        .rate-text b { color: var(--accent); font-weight: 800; }
+        .btn-nav-add {
+            background: linear-gradient(135deg, #0052ff, #0284c7);
+            color: #fff; border: none; border-radius: 9px;
+            padding: 8px 14px; font-size: 12px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; gap: 6px;
+            transition: all 0.15s;
+            box-shadow: 0 4px 14px rgba(0, 82, 255, 0.35);
+        }
+        .btn-nav-add:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 82, 255, 0.5); }
+
+        /* HAMBURGER DRAWER */
+        .drawer-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9998;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+        .drawer-panel {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 380px; max-width: 90vw;
+            background: var(--card-bg);
+            border-right: 1px solid var(--card-border);
+            z-index: 9999;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.6);
+            transform: translateX(-100%);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
+        }
+        .drawer-panel.open { transform: translateX(0); }
+
+        .drawer-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .drawer-brand { display: flex; align-items: center; gap: 12px; }
+        .drawer-brand .logo-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, #0052ff, #38bdf8);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: 800; color: #fff;
+        }
+        .drawer-title { font-size: 15px; font-weight: 800; color: #fff; }
+        .drawer-subtitle { font-size: 10px; color: var(--text-muted); }
+        .btn-close-drawer {
+            background: var(--card-inner); border: 1px solid var(--card-border);
+            color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-close-drawer:hover { color: #fff; border-color: var(--danger); }
+
+        .drawer-content {
+            padding: 18px 20px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex; flex-direction: column; gap: 18px;
+        }
+        .drawer-section {
+            background: var(--card-inner);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .drawer-section-title {
+            font-size: 10px; font-weight: 800; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .btn-drawer-add {
+            width: 100%;
+            background: linear-gradient(135deg, #0052ff, #0284c7);
+            color: #fff; border: none; border-radius: 10px;
+            padding: 12px; font-size: 13px; font-weight: 800;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 16px rgba(0, 82, 255, 0.4);
+            transition: all 0.15s;
+        }
+        .btn-drawer-add:hover { transform: translateY(-1px); }
+        .drawer-rate-box { display: flex; flex-direction: column; gap: 4px; }
+        .rate-badge-small {
+            font-size: 10px; font-weight: 800; color: #10b981;
+            background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+            padding: 2px 8px; border-radius: 12px;
+        }
+        .btn-edit-rate {
+            background: rgba(56,189,248,0.12);
+            border: 1px solid rgba(56,189,248,0.3);
+            color: var(--accent);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 10px; font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-edit-rate:hover { background: rgba(56,189,248,0.25); }
+        .drawer-rate-val { font-size: 18px; font-weight: 800; color: #fff; }
+        .drawer-rate-source { font-size: 10px; color: var(--text-muted); }
+        .drawer-checkbox-row {
+            display: flex; align-items: flex-start; gap: 10px;
+            cursor: pointer; user-select: none;
+        }
+        .drawer-checkbox-row input {
+            margin-top: 3px; accent-color: var(--accent); cursor: pointer;
+        }
+        .drawer-info-box {
+            font-size: 11px; color: var(--text-muted); line-height: 1.5;
+        }
+        .drawer-info-box code { color: var(--accent); font-weight: 700; }
+
+        /* WALLET HORIZONTAL FULL-WIDTH PANEL */
+        .wallet-horizontal-panel {
+            max-width: 1400px;
+            margin: 0 auto 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+        }
+        .wallet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            margin-bottom: 4px;
+        }
+        .wallet-header-left { display: flex; align-items: center; gap: 10px; }
+        .wallet-icon { font-size: 20px; }
+        .wallet-title { font-size: 14px; font-weight: 700; color: #fff; }
+        .wallet-subtitle { font-size: 11px; color: var(--text-muted); }
+        .wallet-badge-status {
+            font-size: 11px; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-muted);
+            border: 1px solid var(--card-border);
+        }
+        .wallet-badge-status.connected {
+            background: rgba(16,185,129,0.12);
+            color: #10b981;
+            border-color: rgba(16,185,129,0.3);
+        }
+        .wallet-tabs { display: flex; gap: 8px; }
+        .wallet-tab {
+            background: var(--card-inner); border: 1px solid var(--card-border);
+            border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600;
+            color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+        }
+        .wallet-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .wallet-input {
+            width: 100%; background: var(--card-inner);
+            border: 1px solid var(--card-border); border-radius: 9px;
+            padding: 9px 12px; color: #fff; font-size: 13px; outline: none;
+            box-sizing: border-box;
+        }
+        .wallet-input:focus { border-color: var(--accent); }
+        .btn-connect-wallet {
+            background: linear-gradient(135deg, var(--usdc-blue), #0284c7);
+            color: #fff; border: none; border-radius: 9px;
+            padding: 9px 18px; font-size: 13px; font-weight: 700;
+            cursor: pointer; transition: opacity 0.15s;
+        }
+        .btn-connect-wallet:hover { opacity: 0.9; }
+        .wallet-connect-row {
+            display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+        }
+        .input-with-action {
+            display: flex; gap: 6px; align-items: center;
+        }
+        .btn-scan-camera {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: #fff; border: none; border-radius: 8px;
+            padding: 8px 12px; font-size: 12px; font-weight: 700;
+            cursor: pointer; transition: all 0.15s; white-space: nowrap;
+        }
+        .btn-scan-camera:hover { opacity: 0.9; }
+        .btn-paste-clip {
+            background: var(--card-inner); border: 1px solid var(--card-border);
+            color: var(--text-muted); border-radius: 8px;
+            padding: 8px 12px; font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.15s; white-space: nowrap;
+        }
+        .btn-paste-clip:hover { border-color: var(--accent); color: #fff; }
+
+        /* WALLET CONNECTED VIEW */
+        .wallet-connected-top-row {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px; margin-bottom: 14px; padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .net-btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        .net-btn {
+            padding: 6px 12px; font-size: 11px; font-weight: 800; border-radius: 8px;
+            cursor: pointer; border: 1.5px solid; transition: all 0.15s;
+            background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: var(--text-muted);
+        }
+        .net-btn.active-net {
+            background: rgba(56,189,248,0.2) !important;
+            border-color: #38bdf8 !important;
+            color: #38bdf8 !important;
+        }
+        .wallet-info-grid-horizontal { display: flex; gap: 10px; flex-wrap: wrap; }
+        .wallet-info-grid-horizontal .winfo-box {
+            background: var(--card-inner); border: 1px solid var(--card-border);
+            border-radius: 8px; padding: 6px 12px; min-width: 130px;
+        }
+        .winfo-box .wlabel { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+        .winfo-box .wval { font-size: 14px; font-weight: 800; color: #fff; margin-top: 2px; }
+        .winfo-box .wval.green { color: #10b981; }
+
+        .wallet-send-stretched {
+            background: var(--card-inner); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 14px 16px;
+        }
+        .send-row-inputs {
+            display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
+        }
+        .send-col-addr { flex: 2; min-width: 260px; }
+        .send-col-amt { flex: 1.2; min-width: 180px; }
+        .send-col-btn { flex: 0 0 auto; min-width: 140px; }
+        .send-field-label {
+            font-size: 10px; color: var(--text-muted); font-weight: 700;
+            display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .send-shortcuts-inline { display: flex; gap: 4px; }
+        .btn-amount-shortcut-mini {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--card-border);
+            border-radius: 6px; padding: 2px 6px; font-size: 10px; font-weight: 700;
+            color: var(--accent); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-amount-shortcut-mini:hover { background: rgba(56,189,248,0.2); border-color: var(--accent); }
+        .btn-send-usdc {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff; border: none; border-radius: 9px;
+            padding: 10px 18px; font-size: 13px; font-weight: 800;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all 0.15s; box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+            width: 100%;
+        }
+        .btn-send-usdc:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.45); }
+        .btn-send-usdc:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .send-result-box {
+            display: none; border-radius: 8px; padding: 10px 12px; font-size: 12px; line-height: 1.4;
+        }
+        .send-result-box.success {
+            display: block; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10b981;
+        }
+        .send-result-box.error {
+            display: block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171;
+        }
+
+        /* SLOTS GRID (FULL WIDTH) */
+        .slots-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 20px;
+        }
+        .slot-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex; flex-direction: column;
+        }
+        .slot-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+        .slot-header {
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;
+        }
+        .slot-badge-id {
+            font-size: 10px; font-weight: 800; color: #fff;
+            background: var(--primary); padding: 3px 8px; border-radius: 6px;
+            display: inline-block; margin-bottom: 4px; text-transform: uppercase;
+        }
+        .slot-name { font-size: 15px; font-weight: 800; color: #fff; margin-top: 1px; }
+        .slot-phone { font-size: 12px; color: var(--text-muted); }
+        .slot-delete-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--card-border);
+            border-radius: 8px; width: 28px; height: 28px;
+            color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; transition: all 0.15s;
+        }
+        .slot-delete-btn:hover { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+        /* IN-SLOT GENERATOR TOOLS (DI ATAS BARCODE) */
+        .slot-generator-tools {
+            background: var(--card-inner);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .slot-merchant-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .slot-merchant-name {
+            font-size: 11px;
+            color: var(--accent);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+        .slot-merchant-name b { color: #fff; }
+        .btn-slot-random-name {
+            background: rgba(255,255,255,0.06);
+            color: var(--accent);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn-slot-random-name:hover { background: rgba(56,189,248,0.15); border-color: var(--accent); }
+
+        .slot-nominal-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .slot-nominal-input-group {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
+            flex: 1;
+        }
+        .slot-nominal-input-group span {
+            padding: 0 6px 0 10px;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .slot-nominal-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            width: 100%;
+            min-width: 50px;
+            padding: 6px 4px;
+        }
+        .btn-slot-set {
+            background: var(--card-border);
+            color: #fff;
+            border: none;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-slot-set:hover { background: var(--accent); color: #000; }
+        .btn-slot-increment {
+            background: linear-gradient(135deg, #0052ff, #0284c7);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 11.5px;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+            box-shadow: 0 2px 8px rgba(0,82,255,0.3);
+            flex-shrink: 0;
+        }
+        .btn-slot-increment:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,82,255,0.5); }
+
+        .slot-auto-random-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 5px;
+            border-top: 1px dashed rgba(255,255,255,0.08);
+        }
+        .slot-auto-random-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+        }
+        .slot-auto-random-label:hover { color: #fff; }
+        .slot-auto-random-label input {
+            accent-color: var(--accent);
+            cursor: pointer;
+            width: 14px;
+            height: 14px;
+            margin: 0;
+        }
+
+        /* QR CODE BOX */
+        .qr-card-box {
+            background: #fff; border-radius: 12px; padding: 12px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; margin-bottom: 12px;
+            transition: transform 0.15s;
+        }
+        .qr-card-box:hover { transform: scale(1.02); }
+        .qr-card-box img { width: 100%; max-width: 220px; height: auto; display: block; }
+        
+        .usdc-calc-box {
+            background: var(--card-inner); border: 1px solid var(--card-border);
+            border-radius: 10px; padding: 8px 10px; text-align: center; margin-bottom: 12px;
+        }
+        .usdc-calc-title { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+        .usdc-amount-highlight { font-size: 18px; font-weight: 800; color: #10b981; }
+        .usdc-rate-note { font-size: 10px; color: #64748b; margin-top: 2px; }
+        .slot-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+        .btn-card-action {
+            background: var(--card-inner); border: 1px solid var(--card-border);
+            border-radius: 8px; padding: 7px 4px; color: var(--text-muted);
+            font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; text-align: center;
+        }
+        .btn-card-action:hover { border-color: var(--accent); color: #fff; background: rgba(56,189,248,0.1); }
+
+        /* EMPTY STATE */
+        .empty-state-box {
+            grid-column: 1 / -1; background: var(--card-bg);
+            border: 2px dashed var(--card-border); border-radius: 16px;
+            padding: 48px 24px; text-align: center; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px); z-index: 9999;
+            display: none; align-items: center; justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 18px; padding: 24px; max-width: 480px; width: 100%;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+        }
+        .modal-box h2 { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+        .modal-box p { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .form-input {
+            width: 100%; background: var(--card-inner); border: 1px solid var(--card-border);
+            border-radius: 9px; padding: 10px 12px; color: #fff; font-size: 13px; outline: none;
+            box-sizing: border-box;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+        .btn-modal-cancel { flex: 1; background: var(--card-inner); border: 1px solid var(--card-border); border-radius: 9px; padding: 11px; color: var(--text-muted); font-weight: 600; cursor: pointer; }
+        .btn-modal-save { flex: 1; background: linear-gradient(135deg, #0052ff, #0284c7); border: none; border-radius: 9px; padding: 11px; color: #fff; font-weight: 700; cursor: pointer; }
+
+        /* MOBILE VIEW COMPACT (< 768px) */
+        @media (max-width: 768px) {
+            body { padding: 10px 8px 24px; }
+            .top-navbar {
+                padding: 8px 12px;
+                margin-bottom: 12px;
+            }
+            .brand-name { font-size: 14px; }
+            .brand-sub { display: none; }
+            .btn-nav-add { padding: 6px 10px; font-size: 11px; }
+            .rate-pill { padding: 4px 8px; }
+            .rate-text { font-size: 10px; }
+
+            .wallet-horizontal-panel {
+                padding: 12px 10px;
+                margin-bottom: 14px;
+            }
+            .wallet-title { font-size: 13px; }
+            .wallet-subtitle { font-size: 10px; }
+            .wallet-connect-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .btn-connect-wallet {
+                width: 100%;
+                text-align: center;
+            }
+            .wallet-connected-top-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .net-btn-group {
+                display: flex;
+                width: 100%;
+            }
+            .net-btn {
+                flex: 1;
+                text-align: center;
+                padding: 6px 4px;
+                font-size: 10px;
+            }
+            .wallet-info-grid-horizontal {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .wallet-info-grid-horizontal .winfo-box {
+                min-width: 0;
+                padding: 6px 8px;
+            }
+            .send-row-inputs {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .send-col-addr, .send-col-amt, .send-col-btn {
+                width: 100%;
+                min-width: 0;
+            }
+            .send-col-btn label { display: none; }
+            .btn-send-usdc {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .slots-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+            .slot-card {
+                padding: 14px;
+            }
+            .qr-card-box img {
+                max-width: 210px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- TOP NAVBAR (MINIMALIS DENGAN HAMBURGER) -->
+<header class="top-navbar">
+    <div class="nav-left">
+        <button type="button" class="btn-hamburger" onclick="openDrawer()" title="Buka Menu Pengaturan & Kontrol">
+            <span>☰</span>
+        </button>
+        <div class="nav-brand">
+            <div class="logo-icon-mini">₱</div>
+            <div class="brand-text">
+                <span class="brand-name">Coins.ph Hub</span>
+                <span class="brand-sub">Dynamic QR Ph & Web3 Transfer</span>
+            </div>
+        </div>
+    </div>
+    <div class="nav-right">
+        <div class="rate-pill" onclick="openRateSettingsModal()" title="Klik untuk atur kurs Bitget">
+            <span class="dot-live"></span>
+            <span class="rate-text">1 USDC ≈ <b id="liveRateDisplay">60.75</b> PHP</span>
+        </div>
+        <button type="button" class="btn-nav-add" onclick="openAddModal()" title="Tambah Slot Akun Baru">
+            ➕ Tambah Slot
+        </button>
+    </div>
+</header>
+
+<!-- HAMBURGER DRAWER (OFF-CANVAS SLIDE OUT) -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer-panel" id="hamburgerDrawer">
+    <div class="drawer-header">
+        <div class="drawer-brand">
+            <div class="logo-icon">₱</div>
+            <div>
+                <div class="drawer-title">Coins.ph QR Ph Hub</div>
+                <div class="drawer-subtitle">Dynamic QR Filipina & Web3 Multi-Network</div>
+            </div>
+        </div>
+        <button type="button" class="btn-close-drawer" onclick="closeDrawer()" title="Tutup Menu">✕</button>
+    </div>
+
+    <div class="drawer-content">
+        <!-- Action: Tambah Slot Akun -->
+        <div class="drawer-section">
+            <div class="drawer-section-title">MANAJEMEN SLOT AKUN</div>
+            <button type="button" class="btn-drawer-add" onclick="closeDrawer(); openAddModal();">
+                ➕ Tambah Slot Akun Coins.ph
+            </button>
+        </div>
+
+        <!-- Section: Kurs Bitget Wallet -->
+        <div class="drawer-section">
+            <div class="drawer-section-title">KURS DINAMIS BITGET WALLET</div>
+            <div class="drawer-rate-box">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <span class="rate-badge-small">🟢 LIVE RATE</span>
+                    <button type="button" class="btn-edit-rate" onclick="closeDrawer(); openRateSettingsModal();">⚙️ Atur Kurs</button>
+                </div>
+                <div class="drawer-rate-val">
+                    1 USDC ≈ <span id="drawerRateDisplay">60.75</span> PHP
+                </div>
+                <div class="drawer-rate-source" id="drawerRateSource">
+                    Sumber: Bitget Wallet • Kurs Tetap (60.55 + 0.20 buffer)
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Preferensi Sistem -->
+        <div class="drawer-section">
+            <div class="drawer-section-title">PREFERENSI TOKO FILIPINA</div>
+            <label class="drawer-checkbox-row" title="Otomatis mengacak nama merchant Filipina setiap refresh">
+                <input type="checkbox" id="autoRandomNameCheck" class="auto-random-checkbox" onchange="toggleAutoRandom(this.checked)">
+                <div>
+                    <div style="font-weight:700;color:#fff;font-size:12px;">🎲 Acak Otomatis Nama Merchant</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                        Gunakan nama acak Filipina saat memuat halaman kasir.
+                    </div>
+                </div>
+            </label>
+        </div>
+
+        <!-- Section: Informasi Jaringan Server -->
+        <div class="drawer-section">
+            <div class="drawer-section-title">STATUS JARINGAN ENGINE</div>
+            <div class="drawer-info-box">
+                <div><b>Alamat Host:</b> <code id="drawerHostText">192.168.1.14:5000</code></div>
+                <div style="margin-top:4px;"><b>Mode Binding:</b> IP:Port Dinamis Lokal</div>
+                <div style="margin-top:4px;"><b>Jaringan Web3:</b> Base USDC, BSC USDT, BSC USDC</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RATE SETTINGS MODAL -->
+<div id="rateSettingsModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:99999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:22px;max-width:360px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.5);">
+        <h3 style="color:#fff;font-size:15px;font-weight:800;margin:0 0 4px;">⚙️ Pengaturan Rate Manual</h3>
+        <p style="color:var(--text-muted);font-size:11px;margin:0 0 16px;">Sesuaikan kurs dasar Bitget dan buffer pengaman. Rate efektif = Base Rate + Buffer.</p>
+        <div style="margin-bottom:12px;">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:700;display:block;margin-bottom:4px;">BASE RATE (PHP/USDC) — Kurs Swap Bitget</label>
+            <input type="number" id="rateSettingBase" step="0.01" min="0.01" value="60.55" class="form-input" style="margin:0;" placeholder="Contoh: 60.55">
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:700;display:block;margin-bottom:4px;">BUFFER KEAMANAN (PHP) — Tambahan Aman</label>
+            <input type="number" id="rateSettingBuffer" step="0.01" min="0" value="0.20" class="form-input" style="margin:0;" placeholder="Contoh: 0.20">
+        </div>
+        <div id="rateSettingPreview" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px;text-align:center;margin-bottom:16px;font-size:12px;color:#10b981;font-weight:700;">
+            Rate Efektif: 60.75 PHP/USDC
+        </div>
+        <div style="display:flex;gap:8px;">
+            <button type="button" onclick="closeRateSettingsModal()" style="flex:1;background:var(--card-inner);border:1px solid var(--card-border);border-radius:9px;padding:10px;color:var(--text-muted);font-weight:600;cursor:pointer;">Batal</button>
+            <button type="button" onclick="saveRateSettings()" style="flex:2;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:9px;padding:10px;color:#fff;font-weight:800;cursor:pointer;">✅ Simpan Rate</button>
+        </div>
+    </div>
+</div>
+
+<!-- WALLET PENGIRIM PANEL (DIBENTANGKAN HORIZONTAL LUAS) -->
+<div class="wallet-horizontal-panel" id="walletSenderCard">
+    <div class="wallet-header">
+        <div class="wallet-header-left">
+            <div class="wallet-icon">💼</div>
+            <div>
+                <div class="wallet-title" id="walletNetTitle">Wallet Pengirim</div>
+                <div class="wallet-subtitle" id="walletNetSubtitle">Multi-Network Web3 Transfer (Base USDC, BSC USDT/USDC)</div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <span class="wallet-badge-status" id="wBadgeStatus">Belum Terkoneksi</span>
+            <button type="button" id="btnDisconnectWallet" onclick="disconnectWallet()" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;cursor:pointer;">Putus</button>
+        </div>
+    </div>
+
+    <!-- WALLET DISCONNECTED VIEW -->
+    <div id="walletDisconnectedView" style="margin-top:12px;">
+        <div class="wallet-tabs" style="margin-bottom:10px;">
+            <div class="wallet-tab active" id="wtabPk" onclick="setWalletTab('private_key')">🔑 PK</div>
+            <div class="wallet-tab" id="wtabSeed" onclick="setWalletTab('phrase')">📝 Seed Phrase</div>
+        </div>
+        <div class="wallet-connect-row">
+            <div id="winputPkBox" style="flex:1;">
+                <div class="input-with-action">
+                    <input type="password" class="wallet-input" id="winputPk" placeholder="Masukkan Private Key (0x...)" style="margin-bottom:0;" onkeydown="if(event.key==='Enter')connectWallet()">
+                    <button type="button" class="btn-scan-camera" onclick="triggerWalletScan('winputPk', 'pk')" title="Scan QR Code Private Key via Kamera">📷 Scan</button>
+                    <label class="btn-paste-clip" style="cursor:pointer;display:inline-flex;align-items:center;margin:0;" title="Pilih foto QR Private Key">
+                        📁 Foto
+                        <input type="file" accept="image/*" style="display:none;" onchange="handleQRFileInput(event, 'winputPk', 'pk')">
+                    </label>
+                </div>
+            </div>
+            <div id="winputSeedBox" style="display:none;flex:1;">
+                <textarea class="wallet-input" id="winputSeed" rows="1" placeholder="Masukkan 12 atau 24 kata seed phrase dipisah spasi..." style="margin-bottom:0;"></textarea>
+            </div>
+            <button type="button" class="btn-connect-wallet" onclick="connectWallet()" style="white-space:nowrap;">🔗 Hubungkan Wallet</button>
+        </div>
+        <!-- HIDDEN DIRECT NATIVE CAMERA FOR PK -->
+        <input type="file" id="scanCameraPkDirectInput" accept="image/*" capture="environment" style="display:none;" onchange="handleQRFileInput(event, 'winputPk', 'pk')">
+    </div>
+
+    <!-- WALLET CONNECTED VIEW -->
+    <div id="walletConnectedView" style="display:none;margin-top:12px;">
+        <div class="wallet-connected-top-row">
+            <div class="net-btn-group">
+                <button type="button" id="netBtn_base_usdc" onclick="setWalletNetwork('base','USDC')" class="net-btn active-net" title="Base Network — USDC">🔵 Base USDC</button>
+                <button type="button" id="netBtn_bsc_usdt" onclick="setWalletNetwork('bsc','USDT')" class="net-btn" title="BNB Smart Chain — USDT BEP-20">🟡 BSC USDT</button>
+                <button type="button" id="netBtn_bsc_usdc" onclick="setWalletNetwork('bsc','USDC')" class="net-btn" title="BNB Smart Chain — USDC BEP-20">🟢 BSC USDC</button>
+            </div>
+            <div class="wallet-info-grid-horizontal">
+                <div class="winfo-box">
+                    <div class="wlabel">Address Terhubung</div>
+                    <div class="wval" id="wAddressShort" style="font-family:monospace;font-size:12px;">-</div>
+                </div>
+                <div class="winfo-box">
+                    <div class="wlabel" id="wTokenBalLabel">Saldo USDC</div>
+                    <div class="wval green" id="wUSDCBalance">-</div>
+                </div>
+                <div class="winfo-box">
+                    <div class="wlabel" id="wGasBalLabel">Gas ETH</div>
+                    <div class="wval" id="wETHBalance">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transfer Row (Stretched Horizontal) -->
+        <div class="wallet-send-stretched">
+            <div class="send-row-inputs">
+                <div class="send-col-addr">
+                    <label class="send-field-label">ADDRESS PENERIMA (0x...)</label>
+                    <div class="input-with-action">
+                        <input type="text" id="wsendToAddress" class="form-input" placeholder="0x... (Scan / Foto / Paste)" style="font-family:monospace;font-size:12px;margin:0;" onkeydown="if(event.key==='Enter'){event.preventDefault(); if(document.getElementById('wsendAmount').value.trim()){ sendWalletToken(); } else { document.getElementById('wsendAmount').focus(); }}">
+                        <button type="button" class="btn-scan-camera" onclick="triggerWalletScan('wsendToAddress', 'address')" title="Scan Barcode via Kamera">📷 Scan</button>
+                        <label class="btn-paste-clip" style="cursor:pointer;display:inline-flex;align-items:center;margin:0;" title="Pilih foto QR dari galeri atau disk">
+                            📁 Foto
+                            <input type="file" accept="image/*" style="display:none;" onchange="handleQRFileInput(event, 'wsendToAddress', 'address')">
+                        </label>
+                        <button type="button" class="btn-paste-clip" onclick="pasteClipboardToAddress()" title="Tempel dari Clipboard">📋 Paste</button>
+                    </div>
+                    <!-- HIDDEN DIRECT NATIVE CAMERA INPUT -->
+                    <input type="file" id="scanCameraDirectInput" accept="image/*" capture="environment" style="display:none;" onchange="handleQRFileInput(event, 'wsendToAddress', 'address')">
+                </div>
+                <div class="send-col-amt">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                        <label class="send-field-label" id="wAmountLabel" style="margin-bottom:0;">JUMLAH (USDC)</label>
+                        <div class="send-shortcuts-inline">
+                            <button type="button" class="btn-amount-shortcut-mini" onclick="fillSendAmountWithPOS()" title="Gunakan estimasi nominal POS">⚡ POS (<span id="wsendPosEstUsdc">-</span>)</button>
+                            <button type="button" class="btn-amount-shortcut-mini" onclick="fillSendAmountMax()" title="Kirim MAX saldo">💯 MAX</button>
+                        </div>
+                    </div>
+                    <input type="number" id="wsendAmount" class="form-input" step="0.0001" min="0.0001" placeholder="Contoh: 1.1524" style="margin:0;font-weight:700;color:#10b981;" onkeydown="if(event.key==='Enter'){event.preventDefault(); sendWalletToken();}">
+                </div>
+                <div class="send-col-btn">
+                    <label class="send-field-label" style="opacity:0;">AKSI</label>
+                    <button type="button" class="btn-send-usdc" onclick="sendWalletToken()" id="btnSendWalletUsdc">
+                        🚀 Kirim Token
+                    </button>
+                </div>
+            </div>
+
+
+
+            <div class="send-result-box" id="wsendResultBox" style="margin-top:10px;"></div>
+        </div>
+    </div>
+    <!-- INLINE CAMERA SCANNER PANEL (COMMON FOR PK & RECIPIENT ADDRESS) -->
+    <div id="inlineScannerPanel" style="display:none;margin-top:12px;border-radius:12px;overflow:hidden;border:2px solid rgba(56,189,248,0.5);background:#0f172a;position:relative;">
+        <div id="inlineScannerVideo" style="width:100%;height:240px;position:relative;"></div>
+        <div id="inlineScannerStatus" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#10b981;font-size:11px;font-weight:700;padding:8px 12px;text-align:center;">
+            🔍 Menginisialisasi scanner...
+        </div>
+        <button type="button" onclick="closeInlineScanner()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.75);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;line-height:1;">✕</button>
+    </div>
+</div>
+
+
+<!-- SLOTS CONTAINER (GRID AKUN DENGAN GENERATOR TOOLS DI ATAS BARCODE) -->
+<div class="slots-container">
+    <div class="slots-grid" id="slotsGridQRPh">
+        {% if config.accounts and config.accounts|length > 0 %}
+            {% for acc in config.accounts %}
+            <div class="slot-card" id="card_{{ acc.id }}" data-slot-id="{{ acc.id }}" data-default-name="{{ acc.name }}">
+                <div class="slot-header">
+                    <div>
+                        <div class="slot-badge-id">{{ acc.id }} &bull; Coins.ph</div>
+                        <div class="slot-name">{{ acc.display_name or acc.name }}</div>
+                        <div class="slot-phone">{{ acc.phone_masked }} ({{ acc.city }})</div>
+                    </div>
+                    <button type="button" class="slot-delete-btn" onclick="deleteSlot('{{ acc.id }}')" title="Hapus slot">✕</button>
+                </div>
+
+                <!-- IN-SLOT GENERATOR TOOLS (DI ATAS BARCODE) -->
+                <div class="slot-generator-tools">
+                    <div class="slot-merchant-row">
+                        <div class="slot-merchant-name" id="merchantTag_{{ acc.id }}">
+                            🏪 <b id="merchantNameText_{{ acc.id }}">{{ acc.name }}</b>
+                        </div>
+                        <button type="button" class="btn-slot-random-name" onclick="triggerRandomNameAll()" title="Acak nama merchant Filipina untuk semua slot">
+                            🎲 Acak Nama
+                        </button>
+                    </div>
+                    <div class="slot-nominal-row">
+                        <div class="slot-nominal-input-group">
+                            <span>₱</span>
+                            <input type="number" step="0.01" min="0" class="slot-nominal-input" id="nominalInput_{{ acc.id }}" value="70.00" onkeydown="if(event.key==='Enter')applySlotNominal('{{ acc.id }}')">
+                            <button type="button" class="btn-slot-set" onclick="applySlotNominal('{{ acc.id }}')">Set</button>
+                        </div>
+                        <button type="button" class="btn-slot-increment" onclick="triggerIncrementAll()" title="Tambah nominal +0.01">
+                            ⚡ +0.01
+                        </button>
+                    </div>
+                    <div class="slot-auto-random-row">
+                        <label class="slot-auto-random-label" title="Jika aktif: Tombol +0.01 dan tombol Acak Nama akan mengacak nama toko semua slot">
+                            <input type="checkbox" class="auto-random-checkbox" onchange="toggleAutoRandom(this.checked)">
+                            <span>🎲 Mode Acak Nama Toko</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- QR CODE BARCODE -->
+                <div class="qr-card-box" onclick="zoomQR('{{ acc.id }}')">
+                    <img id="qrImg_{{ acc.id }}" src="/api/qr/image?amount=70&account_id={{ acc.id }}" alt="QR {{ acc.name }}">
+                </div>
+
+                <!-- ESTIMASI KIRIM USDC -->
+                <div class="usdc-calc-box">
+                    <div class="usdc-calc-title" id="usdcCalcTitle_{{ acc.id }}">🔵 Estimasi Kirim (Base USDC)</div>
+                    <div class="usdc-amount-highlight" id="usdcAmt_{{ acc.id }}">≈ --- USDC</div>
+                    <div class="usdc-rate-note" id="usdcRateNote_{{ acc.id }}">Memuat kurs...</div>
+                </div>
+
+                <!-- AKSI SLOT -->
+                <div class="slot-actions">
+                    <button type="button" class="btn-card-action" onclick="copySlotPayload('{{ acc.id }}')">📋 Salin Payload</button>
+                    <button type="button" class="btn-card-action" onclick="openCheckout('{{ acc.id }}')">🔗 Buat Invoice</button>
+                </div>
+            </div>
+{% endfor %}
+        {% else %}
+            <div class="empty-state-box">
+                <div class="empty-icon">➕</div>
+                <h2 style="font-size:18px;font-weight:800;color:#fff;margin-bottom:8px;">Belum Ada Slot Akun Coins.ph</h2>
+                <p style="font-size:13px;color:var(--text-muted);max-width:380px;line-height:1.5;margin-bottom:20px;">Tambahkan akun Coins.ph pertama Anda untuk mulai menghasilkan Dynamic QR Code secara instan.</p>
+                <button type="button" class="btn-nav-add" onclick="openAddModal()">➕ Tambah Slot Akun Sekarang</button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- MODAL TAMBAH AKUN COINS.PH (QR PH) -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal-box">
+        <h2>Tambah Slot Akun Coins.ph</h2>
+        <p>Masukkan identitas akun Coins.ph Anda untuk membuat barcode baru.</p>
+        <form id="addAccountForm" onsubmit="handleSaveAccount(event)">
+            <div class="form-group">
+                <label>Nama Pemilik Akun (Sesuai KTP/Coins)</label>
+                <input type="text" id="new_name" class="form-input" placeholder="Contoh: JUAN DELA CRUZ" required autofocus>
+            </div>
+            <div class="form-group">
+                <label>Nomor HP / Wallet ID (+63 / 09...)</label>
+                <input type="text" id="new_phone" class="form-input" placeholder="Contoh: 09171234567 atau 639171234567" required>
+            </div>
+            <div class="form-group">
+                <label>Kota (City)</label>
+                <input type="text" id="new_city" class="form-input" placeholder="Contoh: Manila / Quezon City" value="Manila">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeAddModal()">Batal</button>
+                <button type="submit" class="btn-modal-save">Simpan Slot</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL SCANNER KAMERA WEBCAM -->
+<div class="modal-overlay" id="cameraScanModal">
+    <div class="modal-box" style="max-width:500px;text-align:center;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h2 style="color:#38bdf8;font-size:16px;margin:0;" id="cameraScanTitle">📷 Scan Barcode via Kamera</h2>
+            <button type="button" onclick="closeCameraScanner()" style="background:transparent;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">✕</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;" id="cameraScanSubtitle">
+            Arahkan kamera ke QR Code address penerima atau ambil foto.
+        </p>
+        <div style="margin-bottom:10px;display:flex;gap:6px;justify-content:center;align-items:center;">
+            <select id="cameraDeviceSelect" class="form-input" style="padding:6px 10px;font-size:12px;max-width:280px;" onchange="switchCameraDevice(this.value)">
+                <option value="">🔄 Mendeteksi kamera...</option>
+            </select>
+        </div>
+        <div id="qrCameraReader" style="height:300px;min-height:280px;position:relative;background:#000;border-radius:12px;overflow:hidden;border:2px solid rgba(56,189,248,0.3);"></div>
+        <div id="cameraScanStatus" style="font-size:11px;color:#10b981;margin-top:8px;font-weight:600;">
+            🔍 Mencari QR Code...
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// GLOBAL STATE & STORAGE KEYS
+// ============================================================
+const SAVED_NOMINAL_KEY = 'coins_last_nominal';
+const SAVED_AUTO_RANDOM_KEY = 'coins_auto_random';
+
+let currentNominal = 70.00;
+let autoRandomName = true;
+let slotNominals = {};
+let slotNames = {};
+
+// Active scanner state
+let activeScannerTargetId = 'wsendToAddress';
+let activeScannerMode = 'address';
+let _camStream = null;
+let _camVideo = null;
+let _camCanvas = null;
+let _camScanning = false;
+let _camLastDetect = 0;
+
+// Web3 Wallet state
+let walletConnected = false;
+let walletMethod = 'private_key';
+let _activeNetwork = 'base';
+let _activeToken = 'USDC';
+let _walletBalances = {};
+let BITGET_DISPLAY_RATE = 60.75;
+
+// ============================================================
+// AUTHENTIC PHILIPPINE MERCHANT NAMES GENERATOR (EMVCo <= 25)
+// ============================================================
+const PH_TITLES = [
+    "ALENG", "MANANG", "MANONG", "KUYA", "ATE", "MANG", "TITA", "TITO", "NENA", "NANAY",
+    "TATAY", "KAP", "DON", "DONA", "CHEF", "DOC", "NURSE", "SIR", "MADAM", "COACH",
+    "BOSS", "ATTY", "MAESTRO", "MAESTRA", "SUKI", "BARKADA", "TROPA", "PAPA", "MAMA",
+    "NINO", "NINA", "BOY", "GIRL", "INDAY", "DONG", "BONG", "JUN", "PEPE", "JOY", "ROSE"
+];
+
+const PH_NAMES = [
+    "SANTOS", "REYES", "CRUZ", "BAUTISTA", "GARCIA", "MENDOZA", "TORRES", "DELA CRUZ", "RAMOS", "FLORES",
+    "GONZALES", "VILLANUEVA", "CASTILLO", "AQUINO", "RIVERA", "CASTRO", "ROXAS", "MERCADO", "NAVARRO", "VALDEZ",
+    "SALAZAR", "DOMINGO", "PADILLA", "ENRIQUEZ", "SORIANO", "MARQUEZ", "CORTEZ", "SANTIAGO", "PASCUAL", "DE LEON",
+    "TOLENTINO", "ESPINOZA", "LEGASPI", "MANALO", "GUZMAN", "MACAPAGAL", "LIWANAG", "ALCANTARA", "MABINI", "BONIFACIO",
+    "LUNA", "SILANG", "RIZAL", "AGUINALDO", "QUEZON", "MAGSAYSAY", "LAUREL", "MARCOS", "VILLAR", "CAYETANO",
+    "AYALA", "SY", "TAN", "GOKONGWEI", "YAP", "LIM", "CHUA", "ONG", "CO", "UY", "CHAN", "YU"
+];
+
+const PH_LOCATIONS = [
+    "MANILA", "MAKATI", "QUEZON", "PASIG", "TAGUIG", "CEBU", "DAVAO", "ILOILO", "BACOLOD", "BAGUIO",
+    "CAVITE", "LAGUNA", "BATANGAS", "PAMPANGA", "BULACAN", "RIZAL", "TARLAC", "PASAY", "CALOOCAN", "MANDALUYONG"
+];
+
+const PH_THEMES = [
+    "MABUHAY", "MASAYA", "MATAPAT", "MAPAGPALA", "MALAKAS", "MAAGAP", "BAGO", "MAAYOS", "MATATAG", "MASAGANA",
+    "SULIT", "SWERTE", "MAHUSAY", "PINOY", "PINAY", "TAMBAYAN", "TIPID", "BIDA", "PRIMO", "ALISTO", "PATOK", "SUKI"
+];
+
+const PH_SUFFIXES = [
+    "SARI SARI STORE", "MINI MART", "GROCERY", "GENERAL MDSE", "VARIETY STORE", "DIGITAL SHOP", "PAY HUB",
+    "EXPRESS MART", "CONVENIENCE", "TRADING CO", "ENTERPRISES", "SUPPLY", "MARKET", "BODEGA", "DEPOT", "STATION",
+    "SHOPPE", "MERCHANDISE", "TRADE CENTER", "QUICK PAY", "OUTLET", "TRADING", "KIOSK", "HUB", "CENTER", "POINT",
+    "EXPRESS", "FAST PAY", "SUPERMART", "STORE", "SHOP", "MART", "TIANGGE", "CASH POINT", "ONE STOP", "ALL IN ONE"
+];
+
+function getRandomPhilippineName() {
+    const pattern = Math.floor(Math.random() * 6) + 1;
+    let raw = "";
+    const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+    if (pattern === 1) {
+        raw = `${rand(PH_TITLES)} ${rand(PH_NAMES)} ${rand(PH_SUFFIXES)}`;
+    } else if (pattern === 2) {
+        raw = `${rand(PH_LOCATIONS)} ${rand(PH_THEMES)} ${rand(PH_SUFFIXES)}`;
+    } else if (pattern === 3) {
+        raw = `${rand(PH_NAMES)} ${rand(PH_LOCATIONS)} ${rand(PH_SUFFIXES)}`;
+    } else if (pattern === 4) {
+        raw = `${rand(PH_THEMES)} ${rand(PH_NAMES)} ${rand(PH_SUFFIXES)}`;
+    } else if (pattern === 5) {
+        raw = `${rand(PH_TITLES)} ${rand(PH_LOCATIONS)} ${rand(PH_SUFFIXES)}`;
+    } else {
+        raw = `${rand(PH_NAMES)} ${rand(PH_THEMES)} ${rand(PH_SUFFIXES)}`;
+    }
+    return raw.trim().replace(/[^A-Z0-9\s]/gi, '').toUpperCase().slice(0, 25).trim();
+}
+
+// ============================================================
+// IN-SLOT CONTROLS & SYNCHRONIZATION
+// ============================================================
+function randomizeSlotNames() {
+    document.querySelectorAll('.slot-card').forEach(card => {
+        const sid = card.dataset.slotId;
+        if (!sid) return;
+        slotNames[sid] = getRandomPhilippineName();
+    });
+}
+
+function triggerRandomNameAll() {
+    randomizeSlotNames();
+    document.querySelectorAll('.slot-card').forEach(card => {
+        const sid = card.dataset.slotId;
+        if (!sid) return;
+        const nameText = document.getElementById('merchantNameText_' + sid);
+        if (nameText && slotNames[sid]) {
+            nameText.innerText = slotNames[sid];
+        }
+        updateSingleSlotQR(sid);
+    });
+}
+
+function triggerIncrementAll() {
+    const next = parseFloat((currentNominal + 0.01).toFixed(2));
+    currentNominal = next;
+    try { localStorage.setItem(SAVED_NOMINAL_KEY, currentNominal.toFixed(2)); } catch(e){}
+
+    if (autoRandomName) {
+        randomizeSlotNames();
+    }
+
+    document.querySelectorAll('.slot-card').forEach(card => {
+        const sid = card.dataset.slotId;
+        if (!sid) return;
+        slotNominals[sid] = currentNominal;
+        const inp = document.getElementById('nominalInput_' + sid);
+        if (inp) inp.value = currentNominal.toFixed(2);
+        const nameText = document.getElementById('merchantNameText_' + sid);
+        if (nameText && slotNames[sid]) {
+            nameText.innerText = slotNames[sid];
+        }
+        updateSingleSlotQR(sid);
+    });
+
+    updateUSDCDisplays();
+    fillSendAmountWithPOS();
+}
+
+function applySlotNominal(slotId) {
+    const input = document.getElementById('nominalInput_' + slotId);
+    if (!input) return;
+    const val = parseFloat(input.value);
+    if (isNaN(val) || val <= 0) {
+        alert('Masukkan nominal angka yang valid!');
+        return;
+    }
+    currentNominal = val;
+    try { localStorage.setItem(SAVED_NOMINAL_KEY, currentNominal.toFixed(2)); } catch(e){}
+
+    if (autoRandomName) {
+        randomizeSlotNames();
+    }
+
+    document.querySelectorAll('.slot-card').forEach(card => {
+        const sid = card.dataset.slotId;
+        if (!sid) return;
+        slotNominals[sid] = currentNominal;
+        const inp = document.getElementById('nominalInput_' + sid);
+        if (inp) inp.value = currentNominal.toFixed(2);
+        const nameText = document.getElementById('merchantNameText_' + sid);
+        if (nameText && slotNames[sid]) {
+            nameText.innerText = slotNames[sid];
+        }
+        updateSingleSlotQR(sid);
+    });
+
+    updateUSDCDisplays();
+    fillSendAmountWithPOS();
+}
+
+function toggleAutoRandom(checked) {
+    autoRandomName = !!checked;
+    try { localStorage.setItem(SAVED_AUTO_RANDOM_KEY, autoRandomName ? '1' : '0'); } catch(e){}
+    document.querySelectorAll('.auto-random-checkbox').forEach(cb => {
+        cb.checked = autoRandomName;
+    });
+}
+
+function getSlotNominal(slotId) {
+    if (slotNominals[slotId] !== undefined) return slotNominals[slotId];
+    return currentNominal;
+}
+
+function updateSingleSlotQR(slotId) {
+    const amt = getSlotNominal(slotId);
+    const name = slotNames[slotId] || '';
+    const img = document.getElementById('qrImg_' + slotId);
+    if (img) {
+        img.src = `/api/qr/image?amount=${amt}&account_id=${slotId}&merchant_name=${encodeURIComponent(name)}&t=${Date.now()}`;
+    }
+}
+
+function refreshAllSlots() {
+    document.querySelectorAll('.slot-card').forEach(card => {
+        const slotId = card.dataset.slotId;
+        if (!slotId) return;
+        slotNominals[slotId] = currentNominal;
+        const inp = document.getElementById('nominalInput_' + slotId);
+        if (inp) inp.value = currentNominal.toFixed(2);
+
+        const nameDisplay = document.getElementById('merchantNameText_' + slotId);
+        if (nameDisplay && slotNames[slotId]) {
+            nameDisplay.innerText = slotNames[slotId];
+        }
+        updateSingleSlotQR(slotId);
+    });
+    updateUSDCDisplays();
+    fillSendAmountWithPOS();
+}
+
+// Drawer tools nominal helpers
+function setDrawerNominal(val) {
+    currentNominal = parseFloat(val);
+    try { localStorage.setItem(SAVED_NOMINAL_KEY, currentNominal.toFixed(2)); } catch(e){}
+    const inp = document.getElementById('drawerCustomNominal');
+    if (inp) inp.value = currentNominal.toFixed(2);
+    const badge = document.getElementById('drawerCurrentNominalBadge');
+    if (badge) badge.innerText = '₱ ' + currentNominal.toFixed(2);
+    if (autoRandomName) randomizeSlotNames();
+    refreshAllSlots();
+}
+
+function applyDrawerCustomNominal() {
+    const inp = document.getElementById('drawerCustomNominal');
+    if (!inp) return;
+    const val = parseFloat(inp.value);
+    if (isNaN(val) || val <= 0) {
+        alert('Masukkan nominal angka yang valid!');
+        return;
+    }
+    setDrawerNominal(val);
+}
+
+// ============================================================
+// WALLET SCANNER (DESKTOP & MOBILE 100% ROBUST)
+// ============================================================
+function parseEVMAddressFromQR(raw) {
+    if (!raw) return '';
+    const match = raw.match(/0x[a-fA-F0-9]{40}/);
+    if (match) return match[0];
+    return raw.trim();
+}
+
+function parsePKFromQR(raw) {
+    if (!raw) return '';
+    const match = raw.match(/(?:0x)?[a-fA-F0-9]{64}/);
+    if (match) return match[0];
+    return raw.trim();
+}
+
+async function triggerWalletScan(targetId, mode) {
+    activeScannerTargetId = targetId;
+    activeScannerMode = mode || 'address';
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Check if secure context and mediaDevices is supported for live camera
+    if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        toggleInlineScanner(targetId, mode);
+    } else if (isMobile) {
+        // Direct native camera snap on mobile without browser blocking
+        const camInput = (targetId === 'winputPk')
+            ? document.getElementById('scanCameraPkDirectInput')
+            : document.getElementById('scanCameraDirectInput');
+        if (camInput) camInput.click();
+        else toggleInlineScanner(targetId, mode);
+    } else {
+        // Desktop HTTP mode: open scanner panel with photo upload & paste support
+        toggleInlineScanner(targetId, mode);
+    }
+}
+
+async function _stopNativeCamera() {
+    _camScanning = false;
+    if (_camStream) {
+        try {
+            _camStream.getTracks().forEach(t => t.stop());
+        } catch(e){}
+        _camStream = null;
+    }
+    if (_camVideo) {
+        try {
+            _camVideo.pause();
+            _camVideo.srcObject = null;
+        } catch(e){}
+        _camVideo = null;
+    }
+}
+
+async function toggleInlineScanner(targetInputId, mode) {
+    activeScannerTargetId = targetInputId;
+    activeScannerMode = mode || 'address';
+    const panel = document.getElementById('inlineScannerPanel');
+    const status = document.getElementById('inlineScannerStatus');
+
+    if (panel.style.display !== 'none') {
+        closeInlineScanner();
+        return;
+    }
+
+    panel.style.display = 'block';
+    if (status) status.innerText = '⏳ Membuka scanner...';
+
+    try {
+        await _stopNativeCamera();
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            renderScannerFallbackUI(targetInputId, mode);
+            return;
+        }
+
+        const container = document.getElementById('inlineScannerVideo');
+        container.style.height = '240px';
+        container.innerHTML = '';
+
+        _camVideo = document.createElement('video');
+        _camVideo.setAttribute('playsinline', 'true');
+        _camVideo.setAttribute('autoplay', 'true');
+        _camVideo.setAttribute('muted', 'true');
+        _camVideo.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        container.appendChild(_camVideo);
+
+        _camCanvas = document.createElement('canvas');
+        _camCanvas.style.display = 'none';
+        container.appendChild(_camCanvas);
+
+        _camStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        _camVideo.srcObject = _camStream;
+        await _camVideo.play();
+
+        if (status) status.innerText = '🔍 Arahkan kamera ke QR Code...';
+        _camScanning = true;
+        _camLastDetect = 0;
+        requestAnimationFrame(_scanInlineLoop);
+
+    } catch (err) {
+        renderScannerFallbackUI(targetInputId, mode);
+    }
+}
+
+function renderScannerFallbackUI(targetInputId, mode) {
+    const container = document.getElementById('inlineScannerVideo');
+    const status = document.getElementById('inlineScannerStatus');
+    if (container) {
+        container.style.height = 'auto';
+        container.innerHTML = `
+            <div style="padding:20px 16px;text-align:center;color:#fff;font-size:12px;line-height:1.5;">
+                <div style="font-size:32px;margin-bottom:8px;">📷</div>
+                <div style="font-weight:800;font-size:13px;color:#38bdf8;margin-bottom:6px;">Pindai QR Code Barcode</div>
+                <p style="color:var(--text-muted);font-size:11px;margin-bottom:14px;max-width:380px;margin-left:auto;margin-right:auto;">
+                    Ambil foto barcode langsung menggunakan kamera atau pilih gambar barcode QR Code dari penyimpanan.
+                </p>
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border-radius:9px;cursor:pointer;font-weight:800;font-size:12px;box-shadow:0 4px 14px rgba(14,165,233,0.4);">
+                        📸 Ambil Foto / Pilih Gambar
+                        <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleQRFileInput(event, '${targetInputId}', '${mode}')">
+                    </label>
+                </div>
+                <div style="margin-top:10px;font-size:10px;color:var(--text-muted);">
+                    💡 Di Komputer: Anda juga bisa tekan <kbd style="background:#1e293b;padding:2px 6px;border-radius:4px;color:#38bdf8;">Ctrl + V</kbd> untuk paste screenshot QR code!
+                </div>
+            </div>
+        `;
+    }
+    if (status) {
+        status.innerText = '💡 Klik tombol di atas atau paste gambar QR code langsung.';
+    }
+}
+
+function closeInlineScanner() {
+    const panel = document.getElementById('inlineScannerPanel');
+    if (panel) panel.style.display = 'none';
+    const container = document.getElementById('inlineScannerVideo');
+    if (container) container.innerHTML = '';
+    _stopNativeCamera();
+}
+
+function _scanInlineLoop(timestamp) {
+    if (!_camScanning || !_camVideo) return;
+
+    if (timestamp - _camLastDetect > 150) {
+        _camLastDetect = timestamp;
+        if (_camVideo.readyState === _camVideo.HAVE_ENOUGH_DATA) {
+            _camCanvas.width = _camVideo.videoWidth;
+            _camCanvas.height = _camVideo.videoHeight;
+            const ctx = _camCanvas.getContext('2d');
+            ctx.drawImage(_camVideo, 0, 0, _camCanvas.width, _camCanvas.height);
+            const imgData = ctx.getImageData(0, 0, _camCanvas.width, _camCanvas.height);
+
+            if (typeof jsQR !== 'undefined') {
+                const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' });
+                if (code && code.data) {
+                    onCameraScanSuccess(code.data);
+                    return;
+                }
+            }
+        }
+    }
+    requestAnimationFrame(_scanInlineLoop);
+}
+
+async function handleQRFileInput(event, targetInputId, mode) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    activeScannerTargetId = targetInputId;
+    activeScannerMode = mode || 'address';
+    await decodeImageFile(file);
+    event.target.value = '';
+}
+
+async function decodeImageFile(file) {
+    const status = document.getElementById('inlineScannerStatus');
+    if (status) status.innerText = '⏳ Memindai dan membaca QR Code...';
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const base64Data = e.target.result;
+        
+        // 1. Client-side decode with jsQR
+        const img = new Image();
+        img.onload = async function() {
+            let decoded = null;
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+                const imgData = ctx.getImageData(0, 0, img.width, img.height);
+                if (typeof jsQR !== 'undefined') {
+                    const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' });
+                    if (code && code.data) decoded = code.data;
+                }
+            } catch(cErr){}
+
+            if (decoded) {
+                onCameraScanSuccess(decoded);
+                return;
+            }
+
+            // 2. Server-side C++ ZXing decode fallback (100% accurate)
+            try {
+                const res = await fetch('/api/qr/decode', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ image_base64: base64Data })
+                });
+                const data = await res.json();
+                if (data.success && data.text) {
+                    onCameraScanSuccess(data.text);
+                    return;
+                }
+            } catch(sErr){}
+
+            if (status) status.innerText = '❌ QR Code tidak terdeteksi.';
+            alert('⚠️ Barcode QR Code tidak terdeteksi. Pastikan foto atau gambar QR Code jelas dan tidak buram.');
+        };
+        img.src = base64Data;
+    };
+    reader.readAsDataURL(file);
+}
+
+// Global Clipboard Paste Support (Ctrl+V)
+window.addEventListener('paste', async function(e) {
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const blob = item.getAsFile();
+            if (blob) {
+                const panel = document.getElementById('inlineScannerPanel');
+                if (panel) panel.style.display = 'block';
+                await decodeImageFile(blob);
+                break;
+            }
+        }
+    }
+});
+
+function onCameraScanSuccess(decodedText) {
+    playBeepSound();
+    let finalValue = decodedText.trim();
+    if (activeScannerMode === 'address') {
+        finalValue = parseEVMAddressFromQR(decodedText);
+    } else if (activeScannerMode === 'pk') {
+        finalValue = parsePKFromQR(decodedText);
+    }
+
+    if (activeScannerTargetId) {
+        const targetInput = document.getElementById(activeScannerTargetId);
+        if (targetInput) {
+            targetInput.value = finalValue;
+            targetInput.style.borderColor = '#10b981';
+            targetInput.style.background = 'rgba(16, 185, 129, 0.2)';
+            setTimeout(() => {
+                targetInput.style.borderColor = '';
+                targetInput.style.background = '';
+            }, 2500);
+        }
+    }
+    closeInlineScanner();
+}
+
+function playBeepSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+    } catch(e){}
+}
+
+// ============================================================
+// WEB3 WALLET FUNCTIONS
+// ============================================================
+function _getActiveCfg() {
+    if (_activeNetwork === 'bsc') {
+        if (_activeToken === 'USDC') {
+            return { net: 'bsc', tok: 'USDC', tokKey: 'usdc_bsc_balance', gasKey: 'bnb_balance', sym: 'USDC', label: 'BSC (BEP-20)', sublabel: 'BNB Smart Chain USDC' };
+        }
+        return { net: 'bsc', tok: 'USDT', tokKey: 'usdt_bsc_balance', gasKey: 'bnb_balance', sym: 'USDT', label: 'BSC (BEP-20)', sublabel: 'BNB Smart Chain USDT' };
+    }
+    return { net: 'base', tok: 'USDC', tokKey: 'usdc_balance', gasKey: 'eth_balance', sym: 'USDC', label: 'Base Network', sublabel: 'Base USDC' };
+}
+
+function setWalletNetwork(net, tok) {
+    _activeNetwork = net;
+    _activeToken = tok || 'USDC';
+
+    document.querySelectorAll('.net-btn').forEach(b => b.classList.remove('active-net'));
+    const btnId = `netBtn_${net}_${_activeToken.toLowerCase()}`;
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.add('active-net');
+
+    const cfg = _getActiveCfg();
+    const el = (id) => document.getElementById(id);
+    if (el('walletNetTitle'))    el('walletNetTitle').innerText = `Wallet Pengirim (${cfg.label})`;
+    if (el('walletNetSubtitle')) el('walletNetSubtitle').innerText = `${cfg.sublabel} Transfer Engine`;
+    if (el('wTokenBalLabel'))    el('wTokenBalLabel').innerText = `Saldo ${cfg.sym}`;
+    if (el('wGasBalLabel'))      el('wGasBalLabel').innerText = `Gas (${net === 'bsc' ? 'BNB' : 'ETH'})`;
+    if (el('wAmountLabel'))      el('wAmountLabel').innerText = `JUMLAH (${cfg.sym})`;
+    if (el('wSendBtnLabel'))     el('wSendBtnLabel').innerText = cfg.sym;
+
+    _updateBalanceUI();
+    updateUSDCDisplays();
+    fillSendAmountWithPOS();
+}
+
+function _updateBalanceUI() {
+    const cfg = _getActiveCfg();
+    const el = (id) => document.getElementById(id);
+    const tokBal = _walletBalances[cfg.tokKey] !== undefined ? _walletBalances[cfg.tokKey] : '-';
+    const gasBal = _walletBalances[cfg.gasKey] !== undefined ? _walletBalances[cfg.gasKey] : '-';
+    if (el('wUSDCBalance')) el('wUSDCBalance').innerText = (tokBal !== '-' ? tokBal + ' ' + cfg.sym : '-');
+    if (el('wETHBalance'))  el('wETHBalance').innerText  = (gasBal !== '-' ? gasBal + ' ' + (cfg.net === 'bsc' ? 'BNB' : 'ETH') : '-');
+}
+
+function _applyWalletConnectedUI(addressShort, balances) {
+    _walletBalances = balances || {};
+    const el = (id) => document.getElementById(id);
+    if (el('wBadgeStatus')) {
+        el('wBadgeStatus').innerText = '● ' + addressShort;
+        el('wBadgeStatus').className = 'wallet-badge-status connected';
+    }
+    if (el('btnDisconnectWallet')) el('btnDisconnectWallet').style.display = 'inline-block';
+    if (el('walletDisconnectedView')) el('walletDisconnectedView').style.display = 'none';
+    if (el('walletConnectedView'))    el('walletConnectedView').style.display = 'block';
+    if (el('wAddressShort')) el('wAddressShort').innerText = addressShort;
+    _updateBalanceUI();
+    fetchWalletBalance();
+}
+
+function setWalletTab(tab) {
+    walletMethod = tab;
+    document.getElementById('wtabPk').classList.toggle('active', tab === 'private_key');
+    document.getElementById('wtabSeed').classList.toggle('active', tab === 'phrase');
+    document.getElementById('winputPkBox').style.display = tab === 'private_key' ? 'block' : 'none';
+    document.getElementById('winputSeedBox').style.display = tab === 'phrase' ? 'block' : 'none';
+}
+
+async function connectWallet() {
+    const secret = (walletMethod === 'private_key')
+        ? document.getElementById('winputPk').value.trim()
+        : document.getElementById('winputSeed').value.trim();
+
+    if (!secret) return alert('Silakan masukkan Private Key atau Seed Phrase.');
+
+    try {
+        const res = await fetch('/api/wallet/connect', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({method: walletMethod, credential: secret, secret: secret})
+        });
+        const data = await res.json();
+        if (data.success) {
+            walletConnected = true;
+            _applyWalletConnectedUI(data.address_short || data.address, data.balances || {});
+        } else {
+            alert('Koneksi gagal: ' + (data.message || 'Cek credential Anda.'));
+        }
+    } catch(e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+async function disconnectWallet() {
+    try {
+        await fetch('/api/wallet/disconnect', {method: 'POST'});
+        walletConnected = false;
+        _walletBalances = {};
+        const el = (id) => document.getElementById(id);
+        if (el('wBadgeStatus')) { el('wBadgeStatus').innerText = 'Belum Terkoneksi'; el('wBadgeStatus').className = 'wallet-badge-status'; }
+        if (el('btnDisconnectWallet')) el('btnDisconnectWallet').style.display = 'none';
+        if (el('walletDisconnectedView')) el('walletDisconnectedView').style.display = 'block';
+        if (el('walletConnectedView'))    el('walletConnectedView').style.display = 'none';
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function fetchWalletBalance() {
+    try {
+        const res = await fetch('/api/wallet/balance');
+        const data = await res.json();
+        if (data.success) {
+            _walletBalances = data;
+            _updateBalanceUI();
+        }
+    } catch(e){}
+}
+
+function fillSendAmountWithPOS() {
+    const rate = BITGET_DISPLAY_RATE || 60.75;
+    const est = (currentNominal / rate).toFixed(4);
+    const span = document.getElementById('wsendPosEstUsdc');
+    if (span) span.innerText = est;
+    const amtInp = document.getElementById('wsendAmount');
+    if (amtInp && (!amtInp.value || amtInp.value === '0')) {
+        amtInp.value = est;
+    }
+}
+
+function fillSendAmountMax() {
+    const cfg = _getActiveCfg();
+    const num = parseFloat(_walletBalances[cfg.tokKey] || 0) || 0;
+    if (num > 0) {
+        document.getElementById('wsendAmount').value = num;
+    } else {
+        alert(`Saldo ${cfg.sym} 0 atau belum dimuat.`);
+    }
+}
+
+async function pasteClipboardToAddress() {
+    try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+            const parsed = parseEVMAddressFromQR(text);
+            document.getElementById('wsendToAddress').value = parsed;
+        }
+    } catch(e) {
+        alert('Gagal membaca clipboard: ' + e.message);
+    }
+}
+
+async function sendWalletToken() {
+    const cfg = _getActiveCfg();
+    const toAddress = document.getElementById('wsendToAddress').value.trim();
+    const amountStr = document.getElementById('wsendAmount').value.trim();
+    const resBox = document.getElementById('wsendResultBox');
+    const btn = document.getElementById('btnSendWalletUsdc');
+
+    if (!toAddress || !toAddress.startsWith('0x') || toAddress.length !== 42) {
+        if (resBox) {
+            resBox.className = 'send-result-box error';
+            resBox.style.display = 'block';
+            resBox.innerHTML = '❌ Address tujuan tidak valid! Harus diawali <b>0x</b> dengan panjang 42 karakter.';
+        }
+        return;
+    }
+
+    const amount = parseFloat(amountStr);
+    if (isNaN(amount) || amount <= 0) {
+        if (resBox) {
+            resBox.className = 'send-result-box error';
+            resBox.style.display = 'block';
+            resBox.innerHTML = `❌ Jumlah ${cfg.sym} harus lebih dari 0.`;
+        }
+        return;
+    }
+
+    if (!confirm(`Konfirmasi Pengiriman ${cfg.sym} (${cfg.sublabel}):\n\nKirim: ${amount} ${cfg.sym}\nKe: ${toAddress}\n\nLanjutkan transaksi?`)) {
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `⏳ Mengirim ke ${cfg.label}...`;
+    }
+    if (resBox) {
+        resBox.className = 'send-result-box';
+        resBox.style.display = 'block';
+        resBox.style.background = 'rgba(14, 165, 233, 0.1)';
+        resBox.style.border = '1px solid rgba(14, 165, 233, 0.3)';
+        resBox.style.color = '#38bdf8';
+        resBox.innerHTML = `⏳ Mem-broadcast transaksi ke ${cfg.label} RPC...`;
+    }
+
+    try {
+        const res = await fetch('/api/wallet/send', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                to: toAddress,
+                amount: amount,
+                network: cfg.net,
+                token: cfg.tok
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const explorerLabel = cfg.net === 'bsc' ? 'BscScan Explorer' : 'BaseScan Explorer';
+            if (resBox) {
+                resBox.className = 'send-result-box success';
+                resBox.innerHTML = `
+                    <b>🎉 TRANSAKSI BERHASIL DIKIRIM!</b><br>
+                    Jumlah: <b>${data.amount} ${data.token}</b> via <b>${data.network_name}</b><br>
+                    Ke: <span style="font-family:monospace;">${data.to}</span><br>
+                    TX Hash: <a href="${data.explorer_url}" target="_blank" style="color:#38bdf8;font-weight:700;text-decoration:underline;">Lihat di ${explorerLabel} ↗</a>
+                `;
+            }
+            fetchWalletBalance();
+            document.getElementById('wsendAmount').value = '';
+        } else {
+            if (resBox) {
+                resBox.className = 'send-result-box error';
+                resBox.innerHTML = `❌ <b>Transaksi Gagal:</b> ${data.message}`;
+            }
+        }
+    } catch(e) {
+        if (resBox) {
+            resBox.className = 'send-result-box error';
+            resBox.innerHTML = `❌ <b>Error:</b> ${e.message}`;
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `🚀 Kirim <span id="wSendBtnLabel">${cfg.sym}</span> Sekarang`;
+        }
+    }
+}
+
+async function initAutoWallet() {
+    try {
+        const res = await fetch('/api/wallet/status');
+        const data = await res.json();
+        if (data.success && data.connected && data.address) {
+            walletConnected = true;
+            _applyWalletConnectedUI(data.address_short || data.address, data.balances || {});
+        } else {
+            walletConnected = false;
+            const el = (id) => document.getElementById(id);
+            if (el('wBadgeStatus')) { el('wBadgeStatus').innerText = 'Belum Terkoneksi'; el('wBadgeStatus').className = 'wallet-badge-status'; }
+            if (el('btnDisconnectWallet')) el('btnDisconnectWallet').style.display = 'none';
+            if (el('walletDisconnectedView')) el('walletDisconnectedView').style.display = 'block';
+            if (el('walletConnectedView'))    el('walletConnectedView').style.display = 'none';
+        }
+    } catch(err){}
+}
+
+// ============================================================
+// UI DRAWER & MODALS
+// ============================================================
+function openDrawer() {
+    const drawer = document.getElementById('hamburgerDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    if (drawer && overlay) {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+    }
+}
+
+function closeDrawer() {
+    const drawer = document.getElementById('hamburgerDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    if (drawer && overlay) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+    }
+}
+
+function toggleHamburger() {
+    const drawer = document.getElementById('hamburgerDrawer');
+    if (drawer && drawer.classList.contains('open')) {
+        closeDrawer();
+    } else {
+        openDrawer();
+    }
+}
+
+function closeHamburger() {
+    closeDrawer();
+}
+
+function openAddModal() {
+    const modal = document.getElementById('addModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        closeHamburger();
+    }
+}
+
+function closeAddModal() {
+    const modal = document.getElementById('addModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function zoomQR(slotId) {
+    const modal = document.getElementById('zoomModal');
+    const zoomImg = document.getElementById('zoomImg');
+    const zoomTitle = document.getElementById('zoomTitle');
+    const card = document.getElementById('card_' + slotId);
+    if (!modal || !zoomImg || !card) return;
+
+    const name = (document.getElementById('merchantNameText_' + slotId) || {}).innerText || card.dataset.defaultName || 'Coins.ph';
+    const amt = getSlotNominal(slotId);
+
+    zoomTitle.innerText = `${name} - ₱${amt.toFixed(2)}`;
+    zoomImg.src = `/api/qr/image?amount=${amt}&account_id=${slotId}&merchant_name=${encodeURIComponent(name)}&t=${Date.now()}`;
+    modal.style.display = 'flex';
+}
+
+function closeZoomModal() {
+    const modal = document.getElementById('zoomModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// ============================================================
+// SLOTS MANAGEMENT
+// ============================================================
+async function handleSaveAccount(event) {
+    event.preventDefault();
+    const id = document.getElementById('m_id').value.trim();
+    const name = document.getElementById('m_name').value.trim();
+    const phone = document.getElementById('m_phone').value.trim();
+    const city = document.getElementById('m_city').value.trim() || 'Manila';
+
+    if (!id || !name || !phone) {
+        alert('Mohon lengkapi data ID Slot, Nama, dan Nomor HP!');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/account/add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                id: id,
+                name: name,
+                account_id: phone,
+                city: city,
+                currency_code: '608',
+                mcc: '6016'
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Gagal menambah slot: ' + (data.message || 'Error'));
+        }
+    } catch(err) {
+        alert('Terjadi kesalahan jaringan: ' + err.message);
+    }
+}
+
+async function deleteSlot(slotId) {
+    if (!confirm(`Hapus slot akun ${slotId}?`)) return;
+    try {
+        const res = await fetch(`/api/account/${slotId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Gagal menghapus slot: ' + (data.message || 'Error'));
+        }
+    } catch(err) {
+        alert('Terjadi kesalahan jaringan: ' + err.message);
+    }
+}
+
+async function copySlotPayload(slotId) {
+    const amt = getSlotNominal(slotId);
+    const name = slotNames[slotId] || '';
+    try {
+        const res = await fetch(`/api/qr/raw?amount=${amt}&account_id=${slotId}&merchant_name=${encodeURIComponent(name)}`);
+        const payload = await res.text();
+        await navigator.clipboard.writeText(payload);
+        alert(`✅ EMVCo QR Ph Payload berhasil disalin!\nNominal: ₱${amt.toFixed(2)}\nNama: ${name || 'Default'}`);
+    } catch(err) {
+        alert('Gagal menyalin payload: ' + err.message);
+    }
+}
+
+function openCheckout(slotId) {
+    const amt = getSlotNominal(slotId);
+    const name = slotNames[slotId] || '';
+    window.open(`/checkout?amount=${amt}&account_id=${slotId}&merchant_name=${encodeURIComponent(name)}`, '_blank');
+}
+
+// ============================================================
+// BITGET RATES & USDC CALCULATIONS
+// ============================================================
+let cachedUsdtIdr = 0;
+let cachedPhpIdr = 0;
+let cachedRateUsdcPhp = 0;
+
+async function initBitgetRate() {
+    try {
+        const res = await fetch('/api/rate');
+        const data = await res.json();
+        if (data.success) {
+            BITGET_DISPLAY_RATE = data.effective_rate || data.base_rate || 60.75;
+            cachedRateUsdcPhp = BITGET_DISPLAY_RATE;
+            updateUSDCDisplays();
+            fillSendAmountWithPOS();
+        }
+    } catch(e){}
+}
+
+function updateUSDCDisplays() {
+    const cfg = _getActiveCfg();
+    document.querySelectorAll('.slot-card').forEach(card => {
+        const sid = card.dataset.slotId;
+        if (!sid) return;
+        const amt = getSlotNominal(sid);
+        const titleElem = document.getElementById('usdcCalcTitle_' + sid);
+        const amtElem = document.getElementById('usdcAmt_' + sid);
+        const noteElem = document.getElementById('usdcRateNote_' + sid);
+
+        if (titleElem) {
+            titleElem.innerText = (cfg.net === 'base' ? '🔵' : '🟡') + ` Estimasi Kirim (${cfg.sublabel})`;
+        }
+
+        if (cachedRateUsdcPhp > 0) {
+            const estimatedCrypto = (amt / cachedRateUsdcPhp).toFixed(4);
+            if (amtElem) amtElem.innerText = `≈ ${estimatedCrypto} ${cfg.sym}`;
+            if (noteElem) noteElem.innerText = `1 ${cfg.sym} ≈ ₱${cachedRateUsdcPhp.toFixed(2)} (Bitget Rate)`;
+        } else {
+            if (amtElem) amtElem.innerText = `≈ --- ${cfg.sym}`;
+            if (noteElem) noteElem.innerText = 'Memuat kurs Bitget...';
+        }
+    });
+}
+
+// ============================================================
+// WINDOW ONLOAD INITIALIZATION
+// ============================================================
+window.onload = function() {
+    // 1. Restore last nominal
+    try {
+        const saved = localStorage.getItem(SAVED_NOMINAL_KEY);
+        if (saved && !isNaN(parseFloat(saved)) && parseFloat(saved) > 0) {
+            currentNominal = parseFloat(saved);
+        }
+    } catch(e){}
+
+    // 2. Restore autoRandomName toggle
+    try {
+        const savedAuto = localStorage.getItem(SAVED_AUTO_RANDOM_KEY);
+        if (savedAuto !== null) {
+            autoRandomName = (savedAuto === '1' || savedAuto === 'true');
+        }
+    } catch(e){}
+
+    // 3. Initialize all auto-random checkboxes
+    document.querySelectorAll('.auto-random-checkbox').forEach(cb => {
+        cb.checked = autoRandomName;
+    });
+
+    // 4. Initialize drawer custom nominal input & badge
+    const drawerInp = document.getElementById('drawerCustomNominal');
+    if (drawerInp) drawerInp.value = currentNominal.toFixed(2);
+    const drawerBadge = document.getElementById('drawerCurrentNominalBadge');
+    if (drawerBadge) drawerBadge.innerText = '₱ ' + currentNominal.toFixed(2);
+
+    // 5. Initialize slot names
+    document.querySelectorAll('.slot-card').forEach(card => {
+        const sid = card.dataset.slotId;
+        if (!sid) return;
+        if (autoRandomName) {
+            slotNames[sid] = getRandomPhilippineName();
+        } else {
+            slotNames[sid] = card.dataset.defaultName || 'COINS MERCHANT';
+        }
+    });
+
+    // 6. Refresh all slots & rates & wallet
+    refreshAllSlots();
+    initBitgetRate();
+    initAutoWallet();
+    setInterval(() => { if (walletConnected) fetchWalletBalance(); }, 60000);
+};
+</script>
+</body>
+</html>

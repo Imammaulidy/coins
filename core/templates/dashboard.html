@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Transaksi - Coins.ph Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0052ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --bg: #0b0f19;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-bar h1 {
+            font-size: 22px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #0052ff, #0040c7);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .table-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .table-header {
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: #0f172a;
+            padding: 12px 20px;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-paid {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .action-btn {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            margin-right: 4px;
+            display: inline-block;
+        }
+
+        .action-btn:hover {
+            border-color: var(--accent);
+            background: #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="header-bar">
+        <h1>📊 Dashboard Transaksi Coins.ph</h1>
+        <div style="display: flex; gap: 10px;">
+            <a href="/pos" class="nav-btn">⚡ Buka Kasir POS</a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="label">Total Pendapatan (Lunas)</div>
+            <div class="value" id="statTotalRevenue" style="color: #10b981;">₱ {{ "%.2f"|format(total_revenue) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Transaksi Lunas</div>
+            <div class="value" id="statTotalPaid" style="color: #38bdf8;">{{ total_paid }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Menunggu Pembayaran</div>
+            <div class="value" id="statTotalPending" style="color: #f59e0b;">{{ total_pending }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Total Invoice Dibuat</div>
+            <div class="value" id="statTotalOrders">{{ orders|length }}</div>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="table-card">
+        <div class="table-header">
+            <h2>
+                Riwayat Transaksi Terbaru
+                <span style="font-size: 11px; font-weight: 600; color: #10b981; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulse 2s infinite;"></span>
+                    Live Auto-Sync
+                </span>
+            </h2>
+            <button onclick="refreshDashboard()" class="action-btn">🔄 Refresh Data</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Nominal</th>
+                    <th>Pelanggan</th>
+                    <th>Catatan</th>
+                    <th>Status</th>
+                    <th>Waktu Dibuat</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                {% for o in orders %}
+                <tr>
+                    <td><b>#{{ o.order_id }}</b></td>
+                    <td style="font-weight: 700; color: #fff;">₱ {{ "%.2f"|format(o.amount) }}</td>
+                    <td>{{ o.customer_name or '-' }}</td>
+                    <td>{{ o.note or '-' }}</td>
+                    <td>
+                        {% if o.status == 'PAID' %}
+                        <span class="badge badge-paid">Lunas</span>
+                        {% else %}
+                        <span class="badge badge-pending">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--muted); font-size: 12px;">{{ o.created_at }}</td>
+                    <td>
+                        <a href="/pay/{{ o.order_id }}" target="_blank" class="action-btn">🔗 Link Pay</a>
+                        {% if o.status != 'PAID' %}
+                        <button onclick="markPaid('{{ o.order_id }}')" class="action-btn" style="color: #10b981;">✓ Lunas</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--muted); padding: 30px;">
+                        Belum ada transaksi. Silakan buat invoice baru dari Kasir POS.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function refreshDashboard() {
+        try {
+            const res = await fetch('/api/orders');
+            const data = await res.json();
+            if (!data.success) return;
+
+            // Update stats
+            document.getElementById('statTotalRevenue').innerText = '₱ ' + parseFloat(data.total_revenue).toFixed(2);
+            document.getElementById('statTotalPaid').innerText = data.total_paid;
+            document.getElementById('statTotalPending').innerText = data.total_pending;
+            document.getElementById('statTotalOrders').innerText = data.total_orders;
+
+            // Update table
+            const tbody = document.getElementById('ordersTableBody');
+            if (data.orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px;">Belum ada transaksi.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            data.orders.forEach(o => {
+                const isPaid = o.status === 'PAID';
+                const statusBadge = isPaid
+                    ? '<span class="badge badge-paid">Lunas</span>'
+                    : '<span class="badge badge-pending">Pending</span>';
+                
+                const actionBtn = !isPaid
+                    ? `<button onclick="markPaid('${o.order_id}')" class="action-btn" style="color:#10b981;">✓ Lunas</button>`
+                    : '';
+
+                html += `<tr>
+                    <td><b>#${o.order_id}</b></td>
+                    <td style="font-weight:700;color:#fff;">₱ ${parseFloat(o.amount).toFixed(2)}</td>
+                    <td>${o.customer_name || '-'}</td>
+                    <td>${o.note || '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td style="color:var(--muted);font-size:12px;">${o.created_at || '-'}</td>
+                    <td>
+                        <a href="/pay/${o.order_id}" target="_blank" class="action-btn">🔗 Link Pay</a>
+                        ${actionBtn}
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        } catch(e) {
+            console.warn('[Dashboard Auto-Sync Error]', e);
+        }
+    }
+
+    // Auto-sync every 3 seconds
+    setInterval(refreshDashboard, 3000);
+
+    async function markPaid(orderId) {
+        if (confirm('Tandai order #' + orderId + ' sebagai LUNAS?')) {
+            const res = await fetch('/api/payment/' + orderId + '/pay', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({payment_method: 'Manual Dashboard Confirm'})
+            });
+            const data = await res.json();
+            if (data.success) {
+                refreshDashboard();
+            } else {
+                alert('Gagal update status: ' + data.message);
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
