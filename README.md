@@ -8,7 +8,7 @@ Payment Gateway mandiri, POS Kasir Web resmi berstandar nasional Filipina (**QR 
 
 ### 1. 🤖 Telegram Bot Otomatisasi (Multi-Platform: PC & Termux)
 - **Role-Based Access Control (RBAC) Multi-User**:
-  - **Super Admin Master Key**: Ketik `Imam2507` di chat untuk langsung mengklaim akses Super Admin Permanen.
+  - **Super Admin Master Key**: Ketik kode master admin (default: `ADMIN123` atau sesuai settingan `core/config.json`) di chat untuk langsung mengklaim akses Super Admin Permanen.
   - **Generator Kode Akses Member**: Admin dapat membuat kode akses pengguna dengan masa berlaku `1 Hari`, `3 Hari`, `7 Hari`, dan `30 Hari`.
   - **Pemisahan Menu Berdasarkan Role**:
     - **Admin**: Akses penuh (Buat QR Ph, Transfer Web3, Reset ADB, Status Slot, Buat Kode User, Base Setting).
@@ -162,7 +162,7 @@ pm2 stop coins-bot
 ## 👑 Hak Akses & Keamanan RBAC
 
 1. **Super Admin**:
-   - Ketik kode rahasia master: `Imam2507` di chat Telegram.
+   - Ketik kode rahasia master (default: `ADMIN123` atau ubah sesuai keinginan di `core/config.json`) di chat Telegram.
    - Status akun otomatis ditingkatkan menjadi **Super Admin Permanen**.
 2. **Member / User Biasa**:
    - Minta kode akses berdurasi (1, 3, 7, atau 30 hari) ke Super Admin.

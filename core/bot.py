@@ -151,12 +151,12 @@ def get_user_role_and_expiry(user_id: int) -> Tuple[str, Optional[datetime]]:
 
 def redeem_code(user_id: int, username: str, code_input: str) -> Tuple[bool, str, str]:
     """
-    Menebus kode akses atau Master Key Admin (Imam2507).
+    Menebus kode akses atau Master Key Admin.
     Returns: (SUCCESS, ROLE, MESSAGE)
     """
     global config
     code_input = code_input.strip()
-    master_key = config.get("security", {}).get("admin_master_code", "Imam2507")
+    master_key = config.get("security", {}).get("admin_master_code", "ADMIN123")
 
     # 1. Cek Master Key Admin
     if code_input == master_key:
