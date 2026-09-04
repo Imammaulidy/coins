@@ -27,12 +27,6 @@ if exist ".venv\Scripts\activate.bat" (
     goto RUN_BOT
 )
 
-if exist "coins\.venv\Scripts\activate.bat" (
-    echo [+] Mengaktifkan Virtual Environment coins\.venv...
-    call coins\.venv\Scripts\activate.bat
-    goto RUN_BOT
-)
-
 :: Jika belum ada venv sama sekali, buat baru
 color 0E
 echo [*] Menyiapkan Virtual Environment (.venv)...

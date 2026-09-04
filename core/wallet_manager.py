@@ -6,6 +6,7 @@ serta pengiriman USDC (Base/BSC) dan USDT (BSC BEP-20).
 import os
 import json
 import time
+import re
 import threading
 import requests
 from typing import Optional, Tuple, Dict, Any, List
@@ -242,6 +243,54 @@ class WalletManager:
         self._lock = threading.Lock()
         self._pk = None
         self._w3_cache: Dict[str, Any] = {}
+        self.load_from_config()
+        self.auto_connect_default()
+
+    def load_from_config(self) -> bool:
+        """Load wallet configuration (PK, seed phrase, or address) from config.json."""
+        try:
+            cfg_path = _get_config_path()
+            if os.path.exists(cfg_path):
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                w_cfg = data.get("wallet", {})
+                if w_cfg.get("private_key"):
+                    res = self.connect_private_key(w_cfg["private_key"], save=False)
+                    return res.get("success", False)
+                elif w_cfg.get("seed_phrase"):
+                    res = self.connect_phrase(w_cfg["seed_phrase"], save=False)
+                    return res.get("success", False)
+                elif w_cfg.get("address"):
+                    return self.set_address_readonly(w_cfg["address"], save=False).get("success", False)
+        except Exception as e:
+            print(f"[WalletManager] Load config notice: {e}")
+        return False
+
+    def set_address_readonly(self, address: str, save: bool = True) -> Dict[str, Any]:
+        """Set watch-only address for checking balances without private key."""
+        addr = address.strip()
+        if not re.match(r"^0x[a-fA-F0-9]{40}$", addr):
+            return {"success": False, "message": f"Format address EVM tidak valid: {addr}"}
+        with self._lock:
+            self._address = addr
+            self._connected = True
+            self._account = None
+            self._pk = None
+
+        if save:
+            try:
+                cfg_path = _get_config_path()
+                cfg_data = {}
+                if os.path.exists(cfg_path):
+                    with open(cfg_path, "r", encoding="utf-8") as f:
+                        cfg_data = json.load(f)
+                cfg_data.setdefault("wallet", {})["address"] = addr
+                with open(cfg_path, "w", encoding="utf-8") as f:
+                    json.dump(cfg_data, f, indent=2, ensure_ascii=False)
+            except Exception as e:
+                print(f"[WalletManager] Warning saving address to config: {e}")
+
+        return {"success": True, "address": addr, "method": "read_only"}
 
     def auto_connect_default(self) -> Dict[str, Any]:
         """Auto-connect developer wallet if DEFAULT_DEV_SEED_PHRASE is set."""
@@ -455,7 +504,27 @@ class WalletManager:
         result["usdc_bsc_balance"] = bsc_net.get("tokens", {}).get("USDC", {}).get("balance", 0.0)
         result["bnb_balance"] = bsc_net.get("native_balance", 0.0)
 
+        # Convenience sub-dictionaries for easy access in bot UI
+        result["base"] = {
+            "ETH": result["eth_balance"],
+            "USDC": result["usdc_balance"]
+        }
+        result["bsc"] = {
+            "BNB": result["bnb_balance"],
+            "USDT": result["usdt_bsc_balance"],
+            "USDC": result["usdc_bsc_balance"]
+        }
+
         return result
+
+    def get_all_balances(self, force_refresh: bool = False) -> Dict[str, Any]:
+        """Alias for get_balance() to support bot.py and API calls."""
+        return self.get_balance()
+
+    def get_address(self) -> Optional[str]:
+        """Method alias for address property."""
+        with self._lock:
+            return self._address
 
     def send_token(
         self,
@@ -480,12 +549,22 @@ class WalletManager:
         tok_info = net_info["tokens"][tok_key]
 
         with self._lock:
-            if not self._connected or not self._account or not self._pk:
-                return {"success": False, "message": "Wallet belum terkoneksi."}
+            if not self._connected or not self._address:
+                return {"success": False, "message": "Wallet belum terhubung. Silakan hubungkan wallet terlebih dahulu."}
+            if not self._account or not self._pk:
+                return {
+                    "success": False,
+                    "message": "Wallet dalam mode pantau (read-only). Untuk mengirim token, hubungkan Private Key wallet Anda."
+                }
             account = self._account
             pk = self._pk
 
         w3 = self._get_w3(net_key)
+        if not w3:
+            return {
+                "success": False,
+                "message": "Modul Web3 tidak tersedia di server atau koneksi RPC gagal."
+            }
 
         try:
             # 1. Validate destination address

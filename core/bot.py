@@ -69,6 +69,8 @@ from qr_engine import (
     load_config,
     save_config,
     get_account,
+    add_or_update_account,
+    delete_account,
     generate_qrph_payload,
     generate_qr_image,
     get_random_merchant_name,
@@ -83,6 +85,13 @@ from database import (
 )
 from wallet_manager import rate_engine, wallet_manager
 from adb_helper import ADBManager
+
+# Decoder QR Barcode dari foto
+from PIL import Image
+try:
+    import zxingcpp
+except ImportError:
+    zxingcpp = None
 
 # Inisialisasi Database SQLite
 init_db()
@@ -262,26 +271,18 @@ def get_slot_selection_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_nominal_preset_keyboard(slot_id: str) -> InlineKeyboardMarkup:
-    """Keyboard inline untuk memilih nominal preset atau input manual"""
+    """Keyboard inline untuk memilih nominal: Set Nominal & Generate (+0.01)"""
     global config
-    base = config.get("bot_settings", {}).get("default_base_php", 100)
+    base = float(config.get("bot_settings", {}).get("default_base_php", 100))
+    plus_one = round(base + 0.01, 2)
 
-    # Preset tombol cepat
     keyboard = [
         [
-            InlineKeyboardButton(f"₱ {base:,} (Base)", callback_data=f"gen_{slot_id}_{base}"),
-            InlineKeyboardButton(f"₱ {base*2:,}", callback_data=f"gen_{slot_id}_{base*2}")
+            InlineKeyboardButton(f"⚡ Generate (₱ {base:,.2f})", callback_data=f"gen:{slot_id}:{base:.2f}"),
+            InlineKeyboardButton("➕ Generate (+0.01)", callback_data=f"gen:{slot_id}:{plus_one:.2f}")
         ],
         [
-            InlineKeyboardButton("₱ 250", callback_data=f"gen_{slot_id}_250"),
-            InlineKeyboardButton("₱ 500", callback_data=f"gen_{slot_id}_500")
-        ],
-        [
-            InlineKeyboardButton("₱ 1,000", callback_data=f"gen_{slot_id}_1000"),
-            InlineKeyboardButton("₱ 2,500", callback_data=f"gen_{slot_id}_2500")
-        ],
-        [
-            InlineKeyboardButton("✏️ Ketik Nominal Bebas", callback_data=f"gen_custom_{slot_id}"),
+            InlineKeyboardButton("✏️ Set Nominal", callback_data=f"gen_custom_{slot_id}"),
             InlineKeyboardButton("❌ Batal", callback_data="qr_cancel")
         ]
     ]
@@ -413,7 +414,7 @@ async def cmd_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cmd_slots_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Menampilkan status semua slot akun Coins.ph"""
+    """Menampilkan status semua slot akun Coins.ph dengan opsi Tambah & Hapus Slot"""
     user = update.effective_user
     role, _ = get_user_role_and_expiry(user.id)
     if role not in ["ADMIN", "USER"]:
@@ -421,29 +422,41 @@ async def cmd_slots_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     global config
+    config = load_config()
     accounts = config.get("accounts", [])
-    if not accounts:
-        text = (
-            "📱 <b>STATUS SLOT AKUN COINS.PH</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━━\n"
-            "⚠️ <i>Belum ada akun terdaftar di core/config.json.</i>\n"
-            "Tambahkan akun via POS Web atau konfigurasi."
-        )
-        await update.message.reply_text(text, parse_mode=ParseMode.HTML)
-        return
-
     lines = ["📱 <b>STATUS SLOT AKUN COINS.PH</b>\n━━━━━━━━━━━━━━━━━━━━━"]
-    for i, acc in enumerate(accounts):
-        active_str = "🟢 Aktif" if acc.get("active", True) else "🔴 Non-Aktif"
-        lines.append(
-            f"🔹 <b>Slot {i+1}</b>: <b>{acc.get('name', 'Coins User')}</b>\n"
-            f"   📞 Nomor HP: <code>{acc.get('account_id') or acc.get('phone')}</code>\n"
-            f"   🏛 Bank BIC: <code>{acc.get('bank_bic', 'DCPHPHM1XXX')}</code>\n"
-            f"   📌 Sub-ID: <code>{acc.get('sub_id', '99964403')}</code>\n"
-            f"   🔌 Status: {active_str}\n"
-        )
+
+    if not accounts:
+        lines.append("⚠️ <i>Belum ada akun terdaftar.</i>\nKlik tombol <b>Tambah Slot</b> di bawah untuk menambahkan akun baru.")
+    else:
+        for i, acc in enumerate(accounts):
+            active_str = "🟢 Aktif" if acc.get("active", True) else "🔴 Non-Aktif"
+            lines.append(
+                f"🔹 <b>Slot {i+1}</b>: <b>{acc.get('name', 'Coins User')}</b>\n"
+                f"   📞 Nomor HP: <code>{acc.get('account_id') or acc.get('phone')}</code>\n"
+                f"   🏛 Bank BIC: <code>{acc.get('bank_bic', 'DCPHPHM1XXX')}</code>\n"
+                f"   📌 Sub-ID: <code>{acc.get('sub_id', '99964403')}</code>\n"
+                f"   🔌 Status: {active_str}\n"
+            )
     lines.append("━━━━━━━━━━━━━━━━━━━━━")
-    await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML)
+
+    keyboard_buttons = []
+    if role == "ADMIN":
+        slot_actions = [InlineKeyboardButton("➕ Tambah Slot", callback_data="slot_add_prompt")]
+        if accounts:
+            slot_actions.append(InlineKeyboardButton("🗑️ Hapus Slot", callback_data="slot_del_menu"))
+        keyboard_buttons.append(slot_actions)
+    keyboard_buttons.append([InlineKeyboardButton("🔄 Refresh", callback_data="slot_refresh")])
+    reply_markup = InlineKeyboardMarkup(keyboard_buttons)
+
+    full_text = "\n".join(lines)
+    if update.callback_query:
+        try:
+            await update.callback_query.edit_message_text(full_text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+        except Exception:
+            await update.callback_query.message.reply_text(full_text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+    else:
+        await update.message.reply_text(full_text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
 
 
 async def cmd_wallet_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -454,39 +467,76 @@ async def cmd_wallet_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⛔ <b>Akses Terbatas!</b>\nMenu Web3 Wallet hanya tersedia untuk Super Admin.", parse_mode=ParseMode.HTML)
         return
 
-    msg = await update.message.reply_text("⏳ <i>Menghubungi Blockchain RPC (Base & BSC)...</i>", parse_mode=ParseMode.HTML)
+    if update.callback_query:
+        msg = update.callback_query.message
+        try:
+            await update.callback_query.answer()
+        except Exception:
+            pass
+    else:
+        msg = await update.message.reply_text("⏳ <i>Menghubungi Blockchain RPC (Base & BSC)...</i>", parse_mode=ParseMode.HTML)
 
-    loop = asyncio.get_running_loop()
-    balances = await loop.run_in_executor(None, wallet_manager.get_all_balances)
-    pub_addr = wallet_manager.get_address() or "Belum Diatur (Cek .env / wallet_manager)"
+    try:
+        loop = asyncio.get_running_loop()
+        balances = await loop.run_in_executor(None, wallet_manager.get_all_balances)
+        pub_addr = wallet_manager.get_address()
 
-    base_b = balances.get("base", {})
-    bsc_b = balances.get("bsc", {})
+        if not pub_addr or not wallet_manager.is_connected:
+            text = (
+                "💳 <b>INFORMASI WEB3 WALLET</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━━\n"
+                "⚠️ <b>Wallet Belum Terhubung!</b>\n\n"
+                "Hubungkan wallet untuk memantau saldo Base & BSC atau melakukan transfer token.\n"
+                "━━━━━━━━━━━━━━━━━━━━━\n"
+                "Pilih opsi koneksi di bawah:"
+            )
+            keyboard = [
+                [InlineKeyboardButton("🔑 Hubungkan Private Key", callback_data="wallet_connect_pk")],
+                [InlineKeyboardButton("📬 Set Alamat EVM (Pantau Saldo)", callback_data="wallet_set_addr")]
+            ]
+            await msg.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+            return
 
-    text = (
-        f"💳 <b>INFORMASI WEB3 WALLET</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📬 <b>Alamat Wallet:</b>\n"
-        f"<code>{pub_addr}</code>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🔵 <b>Base Network:</b>\n"
-        f"  • ETH (Gas): <b>{base_b.get('ETH', 0.0):.5f} ETH</b>\n"
-        f"  • USDC: <b>${base_b.get('USDC', 0.0):.2f} USDC</b>\n\n"
-        f"🟡 <b>BNB Smart Chain (BSC):</b>\n"
-        f"  • BNB (Gas): <b>{bsc_b.get('BNB', 0.0):.5f} BNB</b>\n"
-        f"  • USDT: <b>${bsc_b.get('USDT', 0.0):.2f} USDT</b>\n"
-        f"  • USDC: <b>${bsc_b.get('USDC', 0.0):.2f} USDC</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"<i>Gunakan tombol '💸 Kirim Token Web3' untuk transfer dana.</i>"
-    )
+        base_b = balances.get("base", {})
+        bsc_b = balances.get("bsc", {})
+        eth_bal = base_b.get("ETH", 0.0)
+        usdc_base = base_b.get("USDC", 0.0)
+        bnb_bal = bsc_b.get("BNB", 0.0)
+        usdt_bsc = bsc_b.get("USDT", 0.0)
+        usdc_bsc = bsc_b.get("USDC", 0.0)
 
-    keyboard = [
-        [InlineKeyboardButton("🔄 Refresh Saldo", callback_data="wallet_refresh")],
-        [InlineKeyboardButton("💸 Kirim Token", callback_data="wallet_send_prompt")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+        text = (
+            f"💳 <b>INFORMASI WEB3 WALLET</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📬 <b>Alamat Wallet:</b>\n"
+            f"<code>{pub_addr}</code>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔵 <b>Base Network:</b>\n"
+            f"  • ETH (Gas): <b>{eth_bal:.5f} ETH</b>\n"
+            f"  • USDC: <b>${usdc_base:,.2f} USDC</b>\n\n"
+            f"🟡 <b>BNB Smart Chain (BSC):</b>\n"
+            f"  • BNB (Gas): <b>{bnb_bal:.5f} BNB</b>\n"
+            f"  • USDT: <b>${usdt_bsc:,.2f} USDT</b>\n"
+            f"  • USDC: <b>${usdc_bsc:,.2f} USDC</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"<i>Gunakan tombol '💸 Kirim Token Web3' untuk transfer dana.</i>"
+        )
 
-    await msg.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+        keyboard = [
+            [InlineKeyboardButton("🔄 Refresh Saldo", callback_data="wallet_refresh")],
+            [
+                InlineKeyboardButton("💸 Kirim Token", callback_data="wallet_send_prompt"),
+                InlineKeyboardButton("🔌 Ganti Wallet", callback_data="wallet_change_menu")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await msg.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+    except Exception as e:
+        logger.error(f"Error checking wallet status: {e}")
+        await msg.edit_text(
+            f"⚠️ <b>Gagal menghubungi Blockchain RPC!</b>\nError: {html.escape(str(e))}\n\nSilakan coba lagi beberapa saat lagi.",
+            parse_mode=ParseMode.HTML
+        )
 
 
 async def cmd_transfer_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -637,15 +687,15 @@ async def cmd_set_base_nominal(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text("⛔ <b>Hanya Admin yang dapat mengubah base nominal.</b>", parse_mode=ParseMode.HTML)
         return
 
-    curr_base = config.get("bot_settings", {}).get("default_base_php", 100)
+    curr_base = float(config.get("bot_settings", {}).get("default_base_php", 100))
     USER_STATES[user.id] = {"state": "AWAITING_BASE_NOMINAL"}
 
     text = (
         f"⚙️ <b>UBAH NOMINAL DEFAULT BASE PHP</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"Nominal Base saat ini: <code>₱ {curr_base:,}</code>\n\n"
-        f"Ketik nominal base baru yang Anda inginkan (contoh: <code>100</code>, <code>200</code>, atau <code>500</code>):\n"
-        f"<i>Tombol preset pembuatan QR Ph akan otomatis mengikuti nominal ini!</i>"
+        f"Nominal Base saat ini: <code>₱ {curr_base:,.2f}</code>\n\n"
+        f"Ketik nominal base baru yang Anda inginkan (contoh: <code>71.23</code> atau <code>100</code>):\n"
+        f"<i>Tombol pembuatan QR Ph akan otomatis mengikuti nominal ini!</i>"
     )
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
@@ -829,28 +879,7 @@ async def process_generate_qrph(
 
     qr_bytes = await loop.run_in_executor(None, _render_image_bytes)
 
-    caption = (
-        f"🏛 <b>INVOICE COINS.PH QR PH (INSTAPAY)</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📱 <b>Slot Akun:</b> {slot_id.upper()} (<code>{acc.get('account_id') or acc.get('phone')}</code>)\n"
-        f"🏪 <b>Merchant:</b> <b>{merchant_name}</b>\n"
-        f"🏷 <b>Total Bayar:</b> <b>₱ {amount_php:,.2f} PHP</b>\n"
-        f"💵 <b>Estimasi USDC:</b> <b>~{est_usdc:.2f} USDC</b> (Kurs: ₱ {client_rate:.2f})\n"
-        f"📌 <b>Order ID:</b> <code>{order_id}</code>\n"
-        f"⏰ <b>Batas Waktu:</b> 15 Menit\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📲 <i>Buka aplikasi Coins.ph, GCash, Maya, GrabPay, atau Mobile Banking, lalu scan barcode di atas.</i>\n\n"
-        f"🔄 <i>Status pembayaran dipantau realtime otomatis.</i>"
-    )
-
-    keyboard = [
-        [InlineKeyboardButton("🔄 Cek Status Bayar", callback_data=f"chk_{order_id}")],
-        [
-            InlineKeyboardButton("📋 Salin Payload", callback_data=f"copy_{order_id}"),
-            InlineKeyboardButton("❌ Batalkan / Hapus QR", callback_data=f"cnl_{order_id}")
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    caption = f"🏪 <b>{merchant_name}</b> — <b>₱ {amount_php:,.2f}</b>"
 
     await status_msg.delete()
 
@@ -859,7 +888,7 @@ async def process_generate_qrph(
         photo=qr_bytes,
         caption=caption,
         parse_mode=ParseMode.HTML,
-        reply_markup=reply_markup
+        reply_markup=None
     )
 
     ACTIVE_INVOICES[order_id] = {
@@ -1018,6 +1047,7 @@ async def background_order_watcher():
 
 async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Menangani semua event klik tombol inline"""
+    global config
     query = update.callback_query
     await query.answer()
 
@@ -1058,9 +1088,9 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         await query.edit_message_text(text, parse_mode=ParseMode.HTML)
         return
 
-    elif data.startswith("gen_"):
-        parts = data.split("_")
-        # Format: gen_{slot_id}_{amount}
+    elif data.startswith("gen:"):
+        # Format: gen:{slot_id}:{amount}
+        parts = data.split(":")
         if len(parts) >= 3:
             slot_id = parts[1]
             try:
@@ -1070,7 +1100,83 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 await query.answer("Nominal tidak valid.", show_alert=True)
         return
 
-    # 3. CEK STATUS BAYAR ORDER
+    elif data.startswith("gen_"):
+        # Fallback format: gen_{slot_id}_{amount}
+        last_us = data.rfind("_")
+        first_us = data.find("_")
+        if first_us != -1 and last_us != -1 and first_us != last_us:
+            slot_id = data[first_us + 1:last_us]
+            amt_str = data[last_us + 1:]
+            try:
+                amount_php = float(amt_str)
+                await process_generate_qrph(query.message.chat_id, user.id, slot_id, amount_php, query.message)
+            except ValueError:
+                await query.answer("Nominal tidak valid.", show_alert=True)
+        return
+
+    # 3. MANAJEMEN SLOT AKUN COINS.PH
+    elif data == "slot_add_prompt":
+        if role != "ADMIN":
+            await query.answer("⛔ Hanya Admin yang dapat menambah slot.", show_alert=True)
+            return
+        USER_STATES[user.id] = {"state": "AWAITING_NEW_SLOT"}
+        text = (
+            "➕ <b>TAMBAH SLOT AKUN COINS.PH</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            "Kirim data akun baru dengan format:\n"
+            "<code>Nama Toko | Nomor HP (639xxx)</code>\n\n"
+            "Contoh:\n"
+            "<code>TOKO BERKAH | 639857999818</code>\n\n"
+            "<i>Atau klik Batal untuk kembali:</i>"
+        )
+        keyboard = [[InlineKeyboardButton("❌ Batal", callback_data="slot_cancel")]]
+        await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+        return
+
+    elif data == "slot_del_menu":
+        if role != "ADMIN":
+            await query.answer("⛔ Hanya Admin yang dapat menghapus slot.", show_alert=True)
+            return
+        config = load_config()
+        accounts = config.get("accounts", [])
+        if not accounts:
+            await query.answer("Tidak ada akun untuk dihapus.", show_alert=True)
+            return
+        buttons = []
+        for i, acc in enumerate(accounts):
+            s_id = acc.get("id")
+            s_name = acc.get("name", "Account")
+            s_phone = acc.get("phone_masked") or acc.get("account_id") or ""
+            buttons.append([InlineKeyboardButton(f"🗑️ Slot {i+1}: {s_name} ({s_phone})", callback_data=f"del_slot_{s_id}")])
+        buttons.append([InlineKeyboardButton("❌ Batal", callback_data="slot_cancel")])
+        text = (
+            "🗑️ <b>HAPUS SLOT AKUN COINS.PH</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            "Pilih slot akun yang ingin Anda hapus:"
+        )
+        await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(buttons))
+        return
+
+    elif data.startswith("del_slot_"):
+        if role != "ADMIN":
+            await query.answer("⛔ Hanya Admin yang dapat menghapus slot.", show_alert=True)
+            return
+        slot_id = data.replace("del_slot_", "")
+        ok = delete_account(slot_id)
+        config = load_config()
+        if ok:
+            await query.answer("✅ Slot akun berhasil dihapus!", show_alert=True)
+        else:
+            await query.answer("⚠️ Slot akun tidak ditemukan.", show_alert=True)
+        await cmd_slots_status(update, context)
+        return
+
+    elif data in ["slot_refresh", "slot_cancel"]:
+        USER_STATES.pop(user.id, None)
+        await cmd_slots_status(update, context)
+        return
+
+    # 4. CEK STATUS BAYAR ORDER
     elif data.startswith("chk_"):
         order_id = data.replace("chk_", "")
         order = get_order(order_id)
@@ -1085,7 +1191,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             await query.answer(f"⏳ Status: {status} (Menunggu Pembayaran)", show_alert=True)
         return
 
-    # 4. SALIN PAYLOAD QR
+    # 5. SALIN PAYLOAD QR
     elif data.startswith("copy_"):
         order_id = data.replace("copy_", "")
         order = get_order(order_id)
@@ -1099,7 +1205,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             await query.answer("Payload tidak ditemukan.", show_alert=True)
         return
 
-    # 5. BATALKAN / HAPUS QR
+    # 6. BATALKAN / HAPUS QR
     elif data.startswith("cnl_"):
         order_id = data.replace("cnl_", "")
         if order_id in ACTIVE_INVOICES:
@@ -1118,7 +1224,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             pass
         return
 
-    # 6. GENERATOR KODE AKSES USER (ADMIN)
+    # 7. GENERATOR KODE AKSES USER (ADMIN)
     elif data.startswith("gen_code_"):
         if role != "ADMIN":
             await query.answer("⛔ Hanya Admin yang dapat membuat kode.", show_alert=True)
@@ -1143,13 +1249,23 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             pass
         return
 
-    # 7. WEB3 WALLET REFRESH & TRANSFER WIZARD
+    # 8. WEB3 WALLET REFRESH, CONNECTION & TRANSFER WIZARD
     elif data == "wallet_refresh":
         loop = asyncio.get_running_loop()
         balances = await loop.run_in_executor(None, wallet_manager.get_all_balances)
-        pub_addr = wallet_manager.get_address() or "Belum Diatur"
+        pub_addr = wallet_manager.get_address()
+
+        if not pub_addr or not wallet_manager.is_connected:
+            await cmd_wallet_status(update, context)
+            return
+
         base_b = balances.get("base", {})
         bsc_b = balances.get("bsc", {})
+        eth_bal = base_b.get("ETH", 0.0)
+        usdc_base = base_b.get("USDC", 0.0)
+        bnb_bal = bsc_b.get("BNB", 0.0)
+        usdt_bsc = bsc_b.get("USDT", 0.0)
+        usdc_bsc = bsc_b.get("USDC", 0.0)
 
         text = (
             f"💳 <b>INFORMASI WEB3 WALLET (UPDATED)</b>\n"
@@ -1158,19 +1274,84 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             f"<code>{pub_addr}</code>\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
             f"🔵 <b>Base Network:</b>\n"
-            f"  • ETH (Gas): <b>{base_b.get('ETH', 0.0):.5f} ETH</b>\n"
-            f"  • USDC: <b>${base_b.get('USDC', 0.0):.2f} USDC</b>\n\n"
+            f"  • ETH (Gas): <b>{eth_bal:.5f} ETH</b>\n"
+            f"  • USDC: <b>${usdc_base:,.2f} USDC</b>\n\n"
             f"🟡 <b>BNB Smart Chain (BSC):</b>\n"
-            f"  • BNB (Gas): <b>{bsc_b.get('BNB', 0.0):.5f} BNB</b>\n"
-            f"  • USDT: <b>${bsc_b.get('USDT', 0.0):.2f} USDT</b>\n"
-            f"  • USDC: <b>${bsc_b.get('USDC', 0.0):.2f} USDC</b>\n"
-            f"━━━━━━━━━━━━━━━━━━━━━"
+            f"  • BNB (Gas): <b>{bnb_bal:.5f} BNB</b>\n"
+            f"  • USDT: <b>${usdt_bsc:,.2f} USDT</b>\n"
+            f"  • USDC: <b>${usdc_bsc:,.2f} USDC</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"<i>Gunakan tombol '💸 Kirim Token Web3' untuk transfer dana.</i>"
         )
         keyboard = [
             [InlineKeyboardButton("🔄 Refresh Saldo", callback_data="wallet_refresh")],
-            [InlineKeyboardButton("💸 Kirim Token", callback_data="wallet_send_prompt")]
+            [
+                InlineKeyboardButton("💸 Kirim Token", callback_data="wallet_send_prompt"),
+                InlineKeyboardButton("🔌 Ganti Wallet", callback_data="wallet_change_menu")
+            ]
         ]
         await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+        return
+
+    elif data == "wallet_connect_pk":
+        USER_STATES[user.id] = {"state": "AWAITING_WALLET_PK"}
+        text = (
+            "🔑 <b>HUBUNGKAN PRIVATE KEY WALLET</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            "Kirimkan <b>Private Key EVM (64 karakter hex)</b> atau kirim <b>foto Barcode QR Code Private Key</b> Anda:\n\n"
+            "<i>Private key disimpan aman di konfigurasi lokal core/config.json untuk otorisasi transfer token.</i>\n\n"
+            "<i>Atau klik Batal untuk kembali:</i>"
+        )
+        keyboard = [[InlineKeyboardButton("❌ Batal", callback_data="wallet_cancel")]]
+        await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+        return
+
+    elif data == "wallet_set_addr":
+        USER_STATES[user.id] = {"state": "AWAITING_WALLET_ADDR"}
+        text = (
+            "📬 <b>SET ALAMAT EVM (PANTAU SALDO)</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            "Kirimkan <b>Alamat Wallet EVM (0x...)</b> atau kirim <b>foto Barcode QR Code dompet</b>:\n\n"
+            "<i>Mode pantau saldo (read-only) dapat mengecek saldo Base & BSC tanpa memasukkan Private Key.</i>\n\n"
+            "<i>Atau klik Batal untuk kembali:</i>"
+        )
+        keyboard = [[InlineKeyboardButton("❌ Batal", callback_data="wallet_cancel")]]
+        await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+        return
+
+    elif data == "wallet_change_menu":
+        curr_addr = wallet_manager.get_address() or "Belum Diatur"
+        text = (
+            "🔌 <b>PENGATURAN KONEKSI WALLET</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            f"Alamat aktif saat ini:\n<code>{curr_addr}</code>\n\n"
+            "Pilih tindakan:"
+        )
+        keyboard = [
+            [InlineKeyboardButton("🔑 Ganti Private Key", callback_data="wallet_connect_pk")],
+            [InlineKeyboardButton("📬 Ganti Alamat EVM (Watch-Only)", callback_data="wallet_set_addr")],
+            [InlineKeyboardButton("❌ Putuskan Wallet", callback_data="wallet_disconnect")],
+            [InlineKeyboardButton("⬅️ Kembali ke Saldo", callback_data="wallet_refresh")]
+        ]
+        await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+        return
+
+    elif data == "wallet_disconnect":
+        wallet_manager.disconnect()
+        try:
+            cfg = load_config()
+            if "wallet" in cfg:
+                cfg.pop("wallet", None)
+                save_config(cfg)
+        except Exception:
+            pass
+        await query.answer("Wallet telah diputuskan.", show_alert=True)
+        await cmd_wallet_status(update, context)
+        return
+
+    elif data == "wallet_cancel":
+        USER_STATES.pop(user.id, None)
+        await cmd_wallet_status(update, context)
         return
 
     elif data == "wallet_send_prompt":
@@ -1187,7 +1368,8 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             text = (
                 f"💸 <b>KIRIM {token} ({net.upper()})</b>\n"
                 f"━━━━━━━━━━━━━━━━━━━━━\n"
-                f"Silakan kirimkan <b>Alamat Dompet Penerima (0x...)</b>:"
+                f"Silakan kirimkan <b>Alamat Dompet Penerima (0x...)</b> atau <b>kirim foto Barcode QR Code dompet</b>:\n\n"
+                f"<i>Atau ketik /batal untuk membatalkan.</i>"
             )
             await query.edit_message_text(text, parse_mode=ParseMode.HTML)
         return
@@ -1198,6 +1380,27 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             await query.message.delete()
         except Exception:
             pass
+        return
+
+    elif data.startswith("quick_send_"):
+        to_addr = data.replace("quick_send_", "")
+        USER_STATES[user.id] = {"state": "AWAITING_TRANSFER_AMOUNT", "network": "base", "token": "USDC", "to_address": to_addr}
+        await query.edit_message_text(
+            f"💸 <b>KIRIM TOKEN KE ALAMAT TER-SCAN</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📬 <b>Penerima:</b> <code>{to_addr}</code>\n"
+            f"🪙 <b>Token:</b> USDC (Base Network)\n\n"
+            f"Ketik jumlah token yang ingin dikirimkan (contoh: <code>5.5</code> atau <code>10</code>):\n"
+            f"<i>Atau ketik /batal untuk membatalkan.</i>",
+            parse_mode=ParseMode.HTML
+        )
+        return
+
+    elif data.startswith("quick_set_addr_"):
+        addr = data.replace("quick_set_addr_", "")
+        wallet_manager.set_address_readonly(addr, save=True)
+        await query.answer("Alamat wallet berhasil disimpan!", show_alert=True)
+        await cmd_wallet_status(update, context)
         return
 
 
@@ -1276,6 +1479,16 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
         return
 
     # 3. INTERACTIVE STATE MACHINE
+    if text.lower() in ["/batal", "batal", "/cancel", "cancel"]:
+        if user_id in USER_STATES:
+            USER_STATES.pop(user_id, None)
+            await update.message.reply_text(
+                "❌ <b>Aksi telah dibatalkan.</b>",
+                parse_mode=ParseMode.HTML,
+                reply_markup=get_role_reply_keyboard(role)
+            )
+            return
+
     if curr_state == "AWAITING_CUSTOM_AMOUNT":
         slot_id = user_st.get("slot_id", "slot_1")
         clean_str = text.replace("₱", "").replace("PHP", "").replace("php", "").replace(",", "").strip()
@@ -1298,25 +1511,119 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
             return
         clean_str = text.replace("₱", "").replace("PHP", "").replace("php", "").replace(",", "").strip()
         try:
-            val = int(clean_str)
+            val = round(float(clean_str), 2)
             if val <= 0:
                 raise ValueError()
             USER_STATES.pop(user_id, None)
             config.setdefault("bot_settings", {})["default_base_php"] = val
             save_config(config)
             await update.message.reply_text(
-                f"✅ <b>Nominal Default Base Berhasil Diubah ke ₱ {val:,} PHP!</b>\n\n"
-                f"Semua tombol preset pembuatan QR Ph otomatis mengikuti nominal ini.",
+                f"✅ <b>Nominal Default Base Berhasil Diubah ke ₱ {val:,.2f} PHP!</b>\n\n"
+                f"Semua tombol pembuatan QR Ph otomatis mengikuti nominal ini.",
                 parse_mode=ParseMode.HTML,
                 reply_markup=get_role_reply_keyboard(role)
             )
             return
         except ValueError:
             await update.message.reply_text(
-                "⚠️ <b>Nominal tidak valid!</b> Masukkan angka (contoh: <code>150</code> atau <code>500</code>):",
+                "⚠️ <b>Nominal tidak valid!</b> Masukkan angka (contoh: <code>71.23</code> atau <code>100</code>):",
                 parse_mode=ParseMode.HTML
             )
             return
+
+    elif curr_state == "AWAITING_NEW_SLOT":
+        if role != "ADMIN":
+            return
+        if "|" not in text:
+            await update.message.reply_text(
+                "⚠️ <b>Format salah!</b>\n"
+                "Gunakan format: <code>Nama Toko | Nomor HP (639xxx)</code>\n\n"
+                "Contoh: <code>TOKO BERKAH | 639857999818</code>\n\n"
+                "<i>Atau ketik /batal untuk membatalkan.</i>",
+                parse_mode=ParseMode.HTML
+            )
+            return
+        parts = text.split("|")
+        name = parts[0].strip()
+        phone = parts[1].strip()
+        if not name or not phone:
+            await update.message.reply_text("⚠️ Nama toko dan Nomor HP tidak boleh kosong.", parse_mode=ParseMode.HTML)
+            return
+        USER_STATES.pop(user_id, None)
+        new_acc = add_or_update_account(name=name, phone=phone)
+        config = load_config()
+        await update.message.reply_text(
+            f"✅ <b>Slot Akun Berhasil Ditambahkan!</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🏪 <b>Nama:</b> {new_acc.get('name')}\n"
+            f"📞 <b>Nomor HP:</b> <code>{new_acc.get('account_id')}</code>\n"
+            f"🆔 <b>Slot ID:</b> <code>{new_acc.get('id')}</code>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━",
+            parse_mode=ParseMode.HTML
+        )
+        await cmd_slots_status(update, context)
+        return
+
+    elif curr_state == "AWAITING_WALLET_PK":
+        if role != "ADMIN":
+            return
+        pk = text.strip()
+        clean_pk = pk.replace("0x", "")
+        if len(clean_pk) != 64 or not re.match(r"^[0-9a-fA-F]{64}$", clean_pk):
+            await update.message.reply_text(
+                "⚠️ <b>Private Key tidak valid!</b> Harus berupa 64 karakter hexadesimal.\nSilakan periksa kembali atau ketik /batal:",
+                parse_mode=ParseMode.HTML
+            )
+            return
+        USER_STATES.pop(user_id, None)
+        res = wallet_manager.connect_private_key(pk)
+        if res.get("success"):
+            try:
+                cfg = load_config()
+                cfg.setdefault("wallet", {})["private_key"] = pk
+                cfg["wallet"]["address"] = res.get("address")
+                save_config(cfg)
+            except Exception:
+                pass
+            await update.message.reply_text(
+                f"✅ <b>Wallet Berhasil Terhubung!</b>\n\n"
+                f"📬 <b>Alamat:</b> <code>{res.get('address')}</code>",
+                parse_mode=ParseMode.HTML
+            )
+            await cmd_wallet_status(update, context)
+        else:
+            await update.message.reply_text(
+                f"❌ <b>Gagal menghubungkan Private Key:</b> {res.get('message')}",
+                parse_mode=ParseMode.HTML
+            )
+        return
+
+    elif curr_state == "AWAITING_WALLET_ADDR":
+        if role != "ADMIN":
+            return
+        addr = text.strip()
+        if not re.match(r"^0x[a-fA-F0-9]{40}$", addr):
+            await update.message.reply_text(
+                "⚠️ <b>Alamat EVM tidak valid!</b> Harus diawali 0x dan 42 karakter hex.\nSilakan ketik ulang atau ketik /batal:",
+                parse_mode=ParseMode.HTML
+            )
+            return
+        USER_STATES.pop(user_id, None)
+        res = wallet_manager.set_address_readonly(addr, save=True)
+        if res.get("success"):
+            await update.message.reply_text(
+                f"✅ <b>Alamat Wallet Berhasil Disimpan (Read-Only)!</b>\n\n"
+                f"📬 <b>Alamat:</b> <code>{addr}</code>\n"
+                f"<i>Saldo Base & BSC Anda sekarang dipantau realtime.</i>",
+                parse_mode=ParseMode.HTML
+            )
+            await cmd_wallet_status(update, context)
+        else:
+            await update.message.reply_text(
+                f"❌ <b>Gagal menyimpan alamat:</b> {res.get('message')}",
+                parse_mode=ParseMode.HTML
+            )
+        return
 
     elif curr_state == "AWAITING_TRANSFER_ADDR":
         if role != "ADMIN":
@@ -1324,7 +1631,7 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
         addr = text.strip()
         if not re.match(r"^0x[a-fA-F0-9]{40}$", addr):
             await update.message.reply_text(
-                "⚠️ <b>Alamat dompet tidak valid!</b>\nFormat harus diawali <code>0x</code> dan terdiri dari 42 karakter hex. Silakan ketik ulang:",
+                "⚠️ <b>Alamat dompet tidak valid!</b>\nFormat harus diawali <code>0x</code> dan terdiri dari 42 karakter hex. Silakan ketik ulang atau kirim foto QR Code dompet:",
                 parse_mode=ParseMode.HTML
             )
             return
@@ -1362,7 +1669,10 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
             )
 
             loop = asyncio.get_running_loop()
-            res = await loop.run_in_executor(None, wallet_manager.send_token, net, token, to_addr, amt)
+            res = await loop.run_in_executor(
+                None,
+                lambda: wallet_manager.send_token(to_address=to_addr, amount=amt, network=net, token=token)
+            )
 
             if res.get("success"):
                 tx_hash = res.get("tx_hash", "0x")
@@ -1381,7 +1691,7 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
                     disable_web_page_preview=True
                 )
             else:
-                err = res.get("error", "Terjadi kesalahan transaksi.")
+                err = res.get("message") or res.get("error", "Terjadi kesalahan transaksi.")
                 await status_msg.edit_text(
                     f"❌ <b>Transfer Gagal!</b>\n\n<b>Alasan:</b> {html.escape(str(err))}",
                     parse_mode=ParseMode.HTML
@@ -1431,6 +1741,174 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
             return
         except Exception:
             pass
+
+
+async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Batalkan aksi interaktif yang sedang berlangsung"""
+    user = update.effective_user
+    if user and user.id in USER_STATES:
+        USER_STATES.pop(user.id, None)
+    role, _ = get_user_role_and_expiry(user.id) if user else ("GUEST", None)
+    await update.message.reply_text(
+        "❌ <b>Aksi telah dibatalkan.</b>",
+        parse_mode=ParseMode.HTML,
+        reply_markup=get_role_reply_keyboard(role)
+    )
+
+
+async def handle_photo_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Menangani foto barcode / QR code yang dikirim oleh pengguna (Decoder Barcode Kamera/Galeri)"""
+    user = update.effective_user
+    if not user or not update.message or not update.message.photo:
+        return
+
+    user_id = user.id
+    role, _ = get_user_role_and_expiry(user_id)
+    if role not in ["ADMIN", "USER"]:
+        await cmd_start(update, context)
+        return
+
+    status_msg = await update.message.reply_text("🔍 <i>Memindai QR Code dari foto...</i>", parse_mode=ParseMode.HTML)
+
+    try:
+        # Unduh foto resolusi tertinggi
+        photo_file = await update.message.photo[-1].get_file()
+        photo_bytes = await photo_file.download_as_bytearray()
+
+        loop = asyncio.get_running_loop()
+        def _decode_qr():
+            if not zxingcpp:
+                return None
+            try:
+                pil_img = Image.open(BytesIO(photo_bytes)).convert("RGB")
+                barcodes = zxingcpp.read_barcodes(pil_img)
+                if barcodes:
+                    return barcodes[0].text
+                gray_img = pil_img.convert("L").convert("RGB")
+                barcodes = zxingcpp.read_barcodes(gray_img)
+                if barcodes:
+                    return barcodes[0].text
+            except Exception as e:
+                logger.error(f"Error in zxing decode: {e}")
+            return None
+
+        decoded_text = await loop.run_in_executor(None, _decode_qr)
+
+        if not decoded_text:
+            await status_msg.edit_text(
+                "⚠️ <b>QR Code tidak terdeteksi</b> pada gambar yang Anda kirim.\n"
+                "Pastikan barcode terlihat jelas, fokus, dan tidak terpotong.",
+                parse_mode=ParseMode.HTML
+            )
+            return
+
+        decoded_clean = decoded_text.strip()
+        user_st = USER_STATES.get(user_id, {})
+        curr_state = user_st.get("state")
+
+        m_addr = re.search(r"0x[a-fA-F0-9]{40}", decoded_clean)
+        m_pk = re.search(r"(?:0x)?([a-fA-F0-9]{64})", decoded_clean)
+
+        # 1. State Transfer: Menunggu Alamat Tujuan
+        if curr_state == "AWAITING_TRANSFER_ADDR" and m_addr:
+            found_addr = m_addr.group(0)
+            user_st["to_address"] = found_addr
+            user_st["state"] = "AWAITING_TRANSFER_AMOUNT"
+            USER_STATES[user_id] = user_st
+            await status_msg.edit_text(
+                f"✅ <b>Alamat Penerima Berhasil Di-scan:</b>\n<code>{found_addr}</code>\n\n"
+                f"Ketik jumlah token <b>{user_st.get('token')}</b> yang ingin dikirimkan (contoh: <code>5.5</code> atau <code>10</code>):",
+                parse_mode=ParseMode.HTML
+            )
+            return
+
+        # 2. State Set Address Wallet
+        if curr_state == "AWAITING_WALLET_ADDR" and m_addr:
+            found_addr = m_addr.group(0)
+            USER_STATES.pop(user_id, None)
+            res = wallet_manager.set_address_readonly(found_addr, save=True)
+            await status_msg.edit_text(
+                f"✅ <b>Alamat Wallet Berhasil Di-scan & Disimpan (Read-Only)!</b>\n"
+                f"<code>{found_addr}</code>\n\n"
+                f"<i>Saldo Base & BSC Anda kini terpantau realtime.</i>",
+                parse_mode=ParseMode.HTML
+            )
+            await cmd_wallet_status(update, context)
+            return
+
+        # 3. State Connect PK Wallet
+        if curr_state == "AWAITING_WALLET_PK" and (m_pk or len(decoded_clean) == 64):
+            pk_val = m_pk.group(1) if m_pk else decoded_clean.replace("0x", "")
+            USER_STATES.pop(user_id, None)
+            res = wallet_manager.connect_private_key(pk_val)
+            if res.get("success"):
+                try:
+                    cfg = load_config()
+                    cfg.setdefault("wallet", {})["private_key"] = pk_val
+                    cfg["wallet"]["address"] = res.get("address")
+                    save_config(cfg)
+                except Exception:
+                    pass
+                await status_msg.edit_text(
+                    f"✅ <b>Private Key Berhasil Di-scan & Terhubung!</b>\n"
+                    f"📬 Alamat: <code>{res.get('address')}</code>",
+                    parse_mode=ParseMode.HTML
+                )
+                await cmd_wallet_status(update, context)
+            else:
+                await status_msg.edit_text(
+                    f"❌ <b>Gagal menghubungkan Private Key dari QR:</b> {res.get('message')}",
+                    parse_mode=ParseMode.HTML
+                )
+            return
+
+        # 4. Standalone EVM Address Detected
+        if m_addr:
+            found_addr = m_addr.group(0)
+            text = (
+                f"🔍 <b>HASIL SCAN BARCODE (EVM ADDRESS)</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📬 <b>Alamat Dompet:</b>\n"
+                f"<code>{found_addr}</code>\n"
+                f"━━━━━━━━━━━━━━━━━━━━━\n"
+                f"Pilih tindakan:"
+            )
+            buttons = [
+                [InlineKeyboardButton("💸 Kirim Token ke Alamat Ini", callback_data=f"quick_send_{found_addr}")],
+                [InlineKeyboardButton("📬 Jadikan Alamat Wallet Aktif", callback_data=f"quick_set_addr_{found_addr}")],
+                [InlineKeyboardButton("❌ Tutup", callback_data="qr_cancel")]
+            ]
+            await status_msg.edit_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(buttons))
+            return
+
+        # 5. Standalone QR Ph InstaPay Payload Detected
+        if decoded_clean.startswith("000201"):
+            text = (
+                f"🔍 <b>HASIL SCAN QR PH (INSTAPAY)</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📋 <b>Payload Terdeteksi:</b>\n"
+                f"<code>{decoded_clean}</code>\n"
+                f"━━━━━━━━━━━━━━━━━━━━━\n"
+                f"<i>QR Ph EMVCo standard terverifikasi valid.</i>"
+            )
+            await status_msg.edit_text(text, parse_mode=ParseMode.HTML)
+            return
+
+        # 6. Barcode Lainnya
+        await status_msg.edit_text(
+            f"🔍 <b>HASIL SCAN QR CODE</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📄 <b>Isi Teks / Data:</b>\n"
+            f"<code>{html.escape(decoded_clean)}</code>",
+            parse_mode=ParseMode.HTML
+        )
+
+    except Exception as e:
+        logger.error(f"Error handling photo scan: {e}")
+        await status_msg.edit_text(
+            f"❌ <b>Gagal memproses foto:</b> {html.escape(str(e))}",
+            parse_mode=ParseMode.HTML
+        )
 
 
 # ============================================================
@@ -1485,11 +1963,13 @@ def main():
     app.add_handler(CommandHandler("gencode", cmd_generate_code_menu))
     app.add_handler(CommandHandler("setbase", cmd_set_base_nominal))
     app.add_handler(CommandHandler("status", cmd_system_status))
+    app.add_handler(CommandHandler(["batal", "cancel"], cmd_cancel))
     app.add_handler(CommandHandler("help", cmd_help))
 
     # Daftarkan Callback Query & Message Handlers
     app.add_handler(CallbackQueryHandler(handle_callback_query))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_messages))
+    app.add_handler(MessageHandler(filters.PHOTO, handle_photo_messages))
     app.add_error_handler(error_handler)
 
     print("[+] Bot aktif dan siap melayani transaksi di Telegram!")
