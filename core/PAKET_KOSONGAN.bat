@@ -1,7 +1,7 @@
 @echo off
 title BUAT PAKET KOSONGAN - Coins.ph Gateway
 color 0b
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 :: Detect Python executable
 set "PYEXE=python"

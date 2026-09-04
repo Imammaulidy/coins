@@ -64,11 +64,10 @@ Payment Gateway mandiri, POS Kasir Web resmi berstandar nasional Filipina (**QR 
 COINS_PAYMENT_GATEWAY/
 ├── run.bat                   # 🚀 [PC] 1-Klik Pintar Launcher Bot Telegram (Auto-Venv, Auto-Pip, Run)
 ├── START_SERVER.bat          # 🌐 [PC] Launcher Server Web POS & Dashboard (Port 5000)
-├── INSTALL_REQUIREMENTS.bat  # 📦 [PC] Installer Dependensi Python
 ├── README.md                 # 📖 Dokumentasi Lengkap
 ├── .gitignore                # 🔒 Proteksi Kredensial (config.json & database aman)
 │
-├── core/                     # 📁 Mesin Utama
+├── core/                     # 📁 Mesin Utama & Modul Backend
 │   ├── bot.py                # 🤖 Bot Telegram RBAC, Dynamic QR Ph & Watcher
 │   ├── ecosystem.config.js   # ⚙️ Konfigurasi PM2 Process Manager (Auto-Restart 24/7)
 │   ├── adb_helper.py         # ⚡ Automasi ADB (PC, Shizuku, Wireless, Root)
@@ -79,13 +78,15 @@ COINS_PAYMENT_GATEWAY/
 │   ├── config.json           # ⚙️ Konfigurasi Aktif (Private / Gitignored)
 │   ├── config.example.json   # 📄 Template Konfigurasi Publik
 │   ├── requirements.txt      # 📦 Daftar Dependensi Python
+│   ├── INSTALL_REQUIREMENTS.bat # 📦 [PC] Installer Dependensi Manual
+│   ├── PAKET_KOSONGAN.bat    # 📦 [PC] Generator Paket Ekspor Bersih
 │   ├── test_system.py        # 🧪 Automated Test Suite Sistem Web
 │   ├── static/               # 🎨 Aset Web Frontend (JS, CSS)
 │   └── templates/            # 🖥️ Template HTML (POS, Dashboard, Checkout)
 │
-└── termux/                   # 📁 Script Khusus Android Termux
+└── TERMUX/                   # 📁 Script Khusus Android Termux
     ├── setup.sh              # 🎛️ Menu Interaktif 9-in-1 (Bot, PM2, Deps, Token, Web POS)
-    └── run.sh                # 🚀 Launcher Server Web Termux
+    └── termuxsetup.sh        # ⚡ Helper Inisialisasi Termux
 ```
 
 ---
@@ -126,7 +127,7 @@ Panduan instalasi mandiri dari awal (*fresh install*), konfigurasi bot, hingga m
 Jika Anda ingin langsung menginstall semuanya sekaligus secara otomatis, buka **Termux** lalu salin dan tempel perintah berikut:
 
 ```bash
-pkg update -y && pkg install -y git python && git clone https://github.com/Imammaulidy/coins.git && cd coins && bash setup.sh
+pkg update -y && pkg install -y git python && git clone https://github.com/Imammaulidy/coins.git && cd coins && bash TERMUX/setup.sh
 ```
 
 ---
@@ -148,13 +149,12 @@ git clone https://github.com/Imammaulidy/coins.git
 
 #### 3. Masuk ke Direktori Proyek & Buka Menu Setup:
 ```bash
-cd coins && bash setup.sh
+cd coins && bash TERMUX/setup.sh
 ```
-*(Atau Anda juga bisa mengetik: `bash TERMUX/setup.sh`)*
 
 ---
 
-### 🎛️ Menu Interaktif & Panduan Penggunaan (`setup.sh`)
+### 🎛️ Menu Interaktif & Panduan Penggunaan (`TERMUX/setup.sh`)
 
 Saat menu setup terbuka di layar Termux:
 
@@ -221,7 +221,7 @@ pm2 stop coins-bot
 ### 🔄 Cara Memperbarui Script ke Versi Terbaru (Git Pull)
 Jika ada pembaruan fitur atau perbaikan bug di GitHub, cukup jalankan:
 ```bash
-cd coins && git pull origin main && bash setup.sh
+cd coins && git pull origin main && bash TERMUX/setup.sh
 ```
 
 ---
