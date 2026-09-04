@@ -8,6 +8,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
+# Buat alias lowercase termux jika berjalan di Linux case-sensitive
+if [ -d "$PROJECT_ROOT/TERMUX" ] && [ ! -e "$PROJECT_ROOT/termux" ]; then
+    ln -s "$PROJECT_ROOT/TERMUX" "$PROJECT_ROOT/termux" 2>/dev/null
+fi
+
 # Cegah CPU Termux masuk mode tidur di background
 termux-wake-lock 2>/dev/null
 
@@ -60,8 +65,8 @@ show_menu() {
     echo -e "  ${GREEN}[3]${NC} ${BOLD}Install Dependencies (Python + Android Tools + rish)${NC}"
     echo -e "      Install paket python, clang, adb, requirements.txt, & rish"
     echo ""
-    echo -e "  ${GREEN}[4]${NC} ${BOLD}Masukan atau Update Token Bot Tele${NC}"
-    echo -e "      Input Bot Token & simpan otomatis ke core/config.json"
+    echo -e "  ${GREEN}[4]${NC} ${BOLD}Masukan atau Update Token Bot & Admin ID${NC}"
+    echo -e "      Input Token Bot & User ID Admin, simpan ke core/config.json"
     echo ""
     echo -e "  ${GREEN}[5]${NC} ${BOLD}Jalankan Bot Telegram (PM2 / Auto-Restart Background)${NC}"
     echo -e "      Jalankan bot via PM2 Process Manager atau Native Background"
@@ -109,10 +114,11 @@ install_deps() {
 
 update_token() {
     echo ""
-    echo -e "${CYAN}=== INPUT / UPDATE TOKEN BOT TELEGRAM ===${NC}"
-    echo "Dapatkan token dari @BotFather di Telegram."
+    echo -e "${CYAN}=== INPUT / UPDATE TOKEN BOT & ADMIN TELEGRAM ===${NC}"
+    echo "1. Dapatkan token bot dari @BotFather di Telegram."
+    echo "2. Dapatkan Telegram User ID Anda dari bot (ketik /start) atau @userinfobot."
     echo ""
-    read -p "Masukkan Bot Token: " NEW_TOKEN
+    read -p "Masukkan Bot Token Telegram: " NEW_TOKEN
     NEW_TOKEN=$(echo "$NEW_TOKEN" | tr -d '[:space:]')
     
     if [ -z "$NEW_TOKEN" ]; then
@@ -120,6 +126,9 @@ update_token() {
         read -p "Tekan Enter untuk kembali..."
         return
     fi
+
+    read -p "Masukkan Telegram User ID Admin (opsional, contoh: 6391692514): " NEW_ADMIN_ID
+    NEW_ADMIN_ID=$(echo "$NEW_ADMIN_ID" | tr -d '[:space:]')
 
     python -c "
 import json, os
@@ -129,11 +138,17 @@ if not os.path.exists(cfg_file) and os.path.exists('core/config.example.json'):
 with open(cfg_file, 'r', encoding='utf-8') as f:
     cfg = json.load(f)
 cfg.setdefault('telegram', {})['bot_token'] = '$NEW_TOKEN'
+admin_id_str = '$NEW_ADMIN_ID'
+if admin_id_str.isdigit():
+    admin_id_int = int(admin_id_str)
+    admin_ids = cfg.setdefault('telegram', {}).setdefault('admin_ids', [])
+    if admin_id_int not in admin_ids:
+        admin_ids.append(admin_id_int)
 with open(cfg_file, 'w', encoding='utf-8') as f:
     json.dump(cfg, f, indent=2)
-print('Token berhasil disimpan ke core/config.json')
+print('Konfigurasi token & admin ID berhasil disimpan!')
 "
-    echo -e "${GREEN}[+] Token bot Telegram berhasil diperbarui!${NC}"
+    echo -e "${GREEN}[+] Token bot Telegram & Admin ID berhasil disimpan ke core/config.json!${NC}"
     read -p "Tekan Enter untuk kembali ke menu..."
 }
 

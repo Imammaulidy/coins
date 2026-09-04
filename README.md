@@ -110,16 +110,54 @@ Server berjalan di port 5000 dan dapat diakses di:
 
 ---
 
-## 📱 Panduan Lengkap Android (Termux) — Siap Salin & Tempel
+## 📱 Panduan Lengkap Android (Termux) — Dari Nol Hingga Berjalan
 
-Jalankan perintah berikut di aplikasi **Termux**:
+Panduan instalasi mandiri dari awal (*fresh install*), konfigurasi bot, hingga menjalankan bot 24/7 di perangkat Android menggunakan **Termux**.
 
-### 1. Masuk ke Folder Proyek & Buka Menu Setup:
+> [!IMPORTANT]
+> **Gunakan Termux Versi Resmi**:
+> Unduh aplikasi Termux dari **[F-Droid](https://f-droid.org/en/packages/com.termux/)** atau **[GitHub Releases Termux](https://github.com/termux/termux-app/releases)**.  
+> ⚠️ **Jangan gunakan Termux dari Google Play Store** karena repositorinya sudah usang (*deprecated*) dan tidak dapat menginstall paket.
+
+---
+
+### ⚡ Mode Ekspres (1 Baris Perintah Langsung Jadi)
+
+Jika Anda ingin langsung menginstall semuanya sekaligus secara otomatis, buka **Termux** lalu salin dan tempel perintah berikut:
+
 ```bash
-cd coins && bash termux/setup.sh
+pkg update -y && pkg install -y git python && git clone https://github.com/Imammaulidy/coins.git && cd coins && bash setup.sh
 ```
 
-### 2. Menu Interaktif `termux/setup.sh`:
+---
+
+### 📋 Tahapan Instalasi Manual Lengkap (Step-by-Step dari Awal)
+
+Bagi Anda yang ingin menjalankan tahapan satu per satu dari awal:
+
+#### 1. Perbarui Paket & Pasang Git serta Python:
+```bash
+pkg update -y && pkg upgrade -y
+pkg install -y git python python-pip
+```
+
+#### 2. Clone Repositori Proyek dari GitHub:
+```bash
+git clone https://github.com/Imammaulidy/coins.git
+```
+
+#### 3. Masuk ke Direktori Proyek & Buka Menu Setup:
+```bash
+cd coins && bash setup.sh
+```
+*(Atau Anda juga bisa mengetik: `bash TERMUX/setup.sh`)*
+
+---
+
+### 🎛️ Menu Interaktif & Panduan Penggunaan (`setup.sh`)
+
+Saat menu setup terbuka di layar Termux:
+
 ```text
 =================================================================
     COINS.PH PAYMENT GATEWAY BOT - TERMUX SETUP & LAUNCHER      
@@ -130,7 +168,7 @@ Pilih menu yang ingin dijalankan:
   [1] Mode ADB Wifi (Wireless Debugging)
   [2] Mode ADB Shizuku (rish)
   [3] Install Dependencies (Python + Android Tools + rish)
-  [4] Masukan atau Update Token Bot Tele
+  [4] Masukan atau Update Token Bot & Admin ID
   [5] Jalankan Bot Telegram (PM2 / Auto-Restart Background)
   [6] Lihat Log Bot Terbaru
   [7] Stop Bot (PM2 / Native)
@@ -139,15 +177,36 @@ Pilih menu yang ingin dijalankan:
   [0] Keluar
 ```
 
-### 3. Menjalankan Bot dengan PM2 (Auto-Restart 24/7):
+#### Langkah Konfigurasi Pertama Kali:
+1. **Pasang Dependensi Sistem**:
+   - Ketik `3` lalu tekan **Enter**. Script akan menginstall library Python yang dibutuhkan dan dependensi Android tools secara otomatis.
+2. **Masukkan Token Bot Telegram & ID Admin**:
+   - Ketik `4` lalu tekan **Enter**.
+   - Masukkan token bot yang didapat dari `@BotFather`.
+   - Masukkan Telegram User ID Anda (dapat dilihat dari `@userinfobot` atau saat ketik `/start` di bot Anda).
+   - Konfigurasi akan tersimpan otomatis ke `core/config.json`.
+3. **Pilih Jalur Automasi Device Android**:
+   - **Pilihan `[1]` ADB Wifi**: Untuk Android 11 ke atas dengan Wireless Debugging (pairing nirkabel).
+   - **Pilihan `[2]` ADB Shizuku (rish)**: Menggunakan Shizuku untuk eksekusi perintah tap/send langsung di jaringan data seluler tanpa butuh Wi-Fi.
+4. **Jalankan Bot Telegram**:
+   - Ketik `8` untuk menginstall PM2 Process Manager (opsional, sangat direkomendasikan agar bot otomatis restart bila terjadi error).
+   - Ketik `5` untuk menjalankan Bot Telegram di background.
+   - Ketik `6` untuk memantau log transaksi dan order watcher secara langsung.
+
+---
+
+### 🔄 Perintah Manajemen PM2 (Background 24/7)
+
+Setelah PM2 terpasang (Menu `[8]`), Anda dapat mengontrol bot kapan saja dari luar menu setup:
+
 ```bash
 # Jalankan Bot di background 24/7
 pm2 start core/ecosystem.config.js
 
-# Cek Log bot realtime
+# Pantau log bot secara realtime
 pm2 logs coins-bot
 
-# Cek status bot
+# Cek status proses bot
 pm2 status
 
 # Restart bot
@@ -155,6 +214,14 @@ pm2 restart coins-bot
 
 # Hentikan bot
 pm2 stop coins-bot
+```
+
+---
+
+### 🔄 Cara Memperbarui Script ke Versi Terbaru (Git Pull)
+Jika ada pembaruan fitur atau perbaikan bug di GitHub, cukup jalankan:
+```bash
+cd coins && git pull origin main && bash setup.sh
 ```
 
 ---
