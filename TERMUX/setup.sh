@@ -151,7 +151,7 @@ start_bot() {
     # Cek PM2
     if command -v pm2 >/dev/null 2>&1; then
         echo -e "${GREEN}[*] Menjalankan bot via PM2 (Background 24/7)...${NC}"
-        pm2 start ecosystem.config.js
+        pm2 start core/ecosystem.config.js
         pm2 save >/dev/null 2>&1
         echo -e "${GREEN}[+] Bot Coins.ph aktif via PM2!${NC}"
     else

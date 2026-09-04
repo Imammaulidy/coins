@@ -63,7 +63,6 @@ Payment Gateway mandiri, POS Kasir Web resmi berstandar nasional Filipina (**QR 
 ```text
 COINS_PAYMENT_GATEWAY/
 ├── run.bat                   # 🚀 [PC] 1-Klik Pintar Launcher Bot Telegram (Auto-Venv, Auto-Pip, Run)
-├── ecosystem.config.js       # ⚙️ Konfigurasi PM2 Process Manager (Auto-Restart 24/7)
 ├── START_SERVER.bat          # 🌐 [PC] Launcher Server Web POS & Dashboard (Port 5000)
 ├── INSTALL_REQUIREMENTS.bat  # 📦 [PC] Installer Dependensi Python
 ├── README.md                 # 📖 Dokumentasi Lengkap
@@ -71,6 +70,7 @@ COINS_PAYMENT_GATEWAY/
 │
 ├── core/                     # 📁 Mesin Utama
 │   ├── bot.py                # 🤖 Bot Telegram RBAC, Dynamic QR Ph & Watcher
+│   ├── ecosystem.config.js   # ⚙️ Konfigurasi PM2 Process Manager (Auto-Restart 24/7)
 │   ├── adb_helper.py         # ⚡ Automasi ADB (PC, Shizuku, Wireless, Root)
 │   ├── api_server.py         # 🌐 Flask REST API Server & Web POS Routing
 │   ├── qr_engine.py          # 🇵🇭 EMVCo / QR Ph InstaPay Payload & Image Generator
@@ -142,7 +142,7 @@ Pilih menu yang ingin dijalankan:
 ### 3. Menjalankan Bot dengan PM2 (Auto-Restart 24/7):
 ```bash
 # Jalankan Bot di background 24/7
-pm2 start ecosystem.config.js
+pm2 start core/ecosystem.config.js
 
 # Cek Log bot realtime
 pm2 logs coins-bot

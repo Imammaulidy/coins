@@ -1,8 +1,11 @@
+const path = require("path");
+
 module.exports = {
   apps: [
     {
       name: "coins-bot",
-      script: "core/bot.py",
+      script: path.join(__dirname, "bot.py"),
+      cwd: path.join(__dirname, ".."),
       interpreter: "python",
       autorestart: true,
       watch: false,
