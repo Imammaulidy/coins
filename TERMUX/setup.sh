@@ -97,7 +97,7 @@ install_deps() {
     
     echo ""
     echo -e "${YELLOW}[*] Menginstall dependensi Python dari core/requirements.txt...${NC}"
-    pip install -r core/requirements.txt --prefer-binary
+    pip install -r core/requirements.txt --prefer-binary --no-warn-script-location
 
     echo ""
     echo -e "${YELLOW}[*] Memeriksa & memasang rish Shizuku helper...${NC}"

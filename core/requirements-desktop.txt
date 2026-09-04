@@ -1,0 +1,4 @@
+# Modul opsional khusus PC Windows (Webcam Desktop Scanner)
+zxing-cpp>=3.0.0
+opencv-python-headless>=4.8.0
+numpy>=1.24.0

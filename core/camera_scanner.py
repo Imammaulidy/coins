@@ -1,9 +1,17 @@
 import time
 import threading
 import re
-import cv2
-import zxingcpp
-import numpy as np
+
+try:
+    import cv2
+    import zxingcpp
+    import numpy as np
+    DESKTOP_CV_AVAILABLE = True
+except ImportError:
+    cv2 = None
+    zxingcpp = None
+    np = None
+    DESKTOP_CV_AVAILABLE = False
 
 class CameraScanner:
     def __init__(self):
@@ -16,6 +24,8 @@ class CameraScanner:
         self.thread = None
 
     def start(self):
+        if not DESKTOP_CV_AVAILABLE or not cv2:
+            return False
         with self.lock:
             self.last_active_time = time.time()
             self.last_detected = None
