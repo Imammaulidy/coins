@@ -151,29 +151,13 @@ def get_user_role_and_expiry(user_id: int) -> Tuple[str, Optional[datetime]]:
 
 def redeem_code(user_id: int, username: str, code_input: str) -> Tuple[bool, str, str]:
     """
-    Menebus kode akses atau Master Key Admin.
+    Menebus kode akses member berbatas waktu.
     Returns: (SUCCESS, ROLE, MESSAGE)
     """
     global config
     code_input = code_input.strip()
-    master_key = config.get("security", {}).get("admin_master_code", "ADMIN123")
 
-    # 1. Cek Master Key Admin
-    if code_input == master_key:
-        admin_ids = config.setdefault("telegram", {}).setdefault("admin_ids", [])
-        if user_id not in admin_ids:
-            admin_ids.append(user_id)
-        security = config.setdefault("security", {})
-        security.setdefault("user_sessions", {})[str(user_id)] = {
-            "role": "ADMIN",
-            "username": username,
-            "registered_at": datetime.now().isoformat(),
-            "expires_at": None
-        }
-        save_config(config)
-        return True, "ADMIN", "🎉 <b>AKSES SUPER ADMIN DIAKTIFKAN!</b>\nAnda sekarang memiliki hak akses penuh ke seluruh fitur sistem Coins.ph."
-
-    # 2. Cek Kode Akses User Biasa
+    # Cek Kode Akses User Biasa
     security = config.setdefault("security", {})
     codes = security.setdefault("access_codes", {})
 
@@ -324,10 +308,11 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"━━━━━━━━━━━━━━━━━━━━━\n"
             f"Halo {html.escape(user.first_name)}! 👋\n"
             f"{status_txt}\n\n"
-            f"Silakan kirimkan <b>Kode Akses</b> atau <b>Master Key Admin</b> Anda untuk membuka seluruh fitur bot:\n"
-            f"<i>Ketik langsung kodenya pada chat ini.</i>\n"
+            f"Silakan kirimkan <b>Kode Akses Member</b> Anda untuk membuka seluruh fitur bot:\n"
+            f"<i>(Dapatkan kode akses dari Super Admin).</i>\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🆔 Telegram ID Anda: <code>{user.id}</code>"
+            f"🆔 Telegram ID Anda: <code>{user.id}</code>\n"
+            f"<i>Bila Anda adalah pemilik bot, tambahkan ID di atas ke daftar admin_ids di core/config.json.</i>"
         )
         USER_STATES[user.id] = {"state": "AWAITING_LOGIN_CODE"}
         reply_markup = get_role_reply_keyboard("GUEST")
@@ -1247,7 +1232,7 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
             return
         else:
             await update.message.reply_text(
-                f"{msg}\n\nSilakan coba lagi atau masukkan Master Key Admin.",
+                f"{msg}\n\nSilakan periksa kembali kode akses Anda atau hubungi Super Admin.",
                 parse_mode=ParseMode.HTML
             )
             return

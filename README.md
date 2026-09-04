@@ -7,13 +7,13 @@ Payment Gateway mandiri, POS Kasir Web resmi berstandar nasional Filipina (**QR 
 ## 🌟 Fitur Unggulan
 
 ### 1. 🤖 Telegram Bot Otomatisasi (Multi-Platform: PC & Termux)
-- **Role-Based Access Control (RBAC) Multi-User**:
-  - **Super Admin Master Key**: Ketik kode master admin (default: `ADMIN123` atau sesuai settingan `core/config.json`) di chat untuk langsung mengklaim akses Super Admin Permanen.
-  - **Generator Kode Akses Member**: Admin dapat membuat kode akses pengguna dengan masa berlaku `1 Hari`, `3 Hari`, `7 Hari`, dan `30 Hari`.
+- **Role-Based Access Control (RBAC) Multi-User (Zero-Backdoor / ID-Based)**:
+  - **Super Admin**: Hak akses Super Admin ditentukan secara aman dan privat via `admin_ids` pada `core/config.json`. Bot otomatis mengenali Telegram ID pemilik secara kriptografis tanpa memerlukan password atau kode rahasia di chat.
+  - **Generator Kode Akses Member**: Admin dapat membuat kode token akses berdurasi `1 Hari`, `3 Hari`, `7 Hari`, dan `30 Hari` untuk member lain via perintah `/gencode`.
   - **Pemisahan Menu Berdasarkan Role**:
     - **Admin**: Akses penuh (Buat QR Ph, Transfer Web3, Reset ADB, Status Slot, Buat Kode User, Base Setting).
     - **User/Member**: Pembuatan QR Ph, Cek Kurs/Kalkulator, Riwayat Transaksi, dan Cek Masa Aktif Akun.
-    - **Guest/Expired**: Menu terkunci hingga memasukkan kode akses yang valid.
+    - **Guest/Expired**: Menu terkunci hingga memasukkan kode akses member yang valid dari Admin.
 - **Dynamic QR Ph Generator Langsung di Chat**:
   - Pilihan Slot Akun (Slot 1 s/d Slot 4).
   - Pilihan Nominal Preset Cepat (`₱ 100`, `₱ 200`, `₱ 250`, `₱ 500`, `₱ 1,000`, `₱ 2,500`) + Opsi Input Bebas.
@@ -159,11 +159,11 @@ pm2 stop coins-bot
 
 ---
 
-## 👑 Hak Akses & Keamanan RBAC
+## 👑 Hak Akses & Keamanan RBAC (ID-Based)
 
 1. **Super Admin**:
-   - Ketik kode rahasia master (default: `ADMIN123` atau ubah sesuai keinginan di `core/config.json`) di chat Telegram.
-   - Status akun otomatis ditingkatkan menjadi **Super Admin Permanen**.
+   - Daftarkan Telegram User ID Anda ke dalam daftar `admin_ids` pada `core/config.json`.
+   - Bot otomatis mengenali Anda sebagai Super Admin secara kriptografis tanpa password atau backdoor di chat.
 2. **Member / User Biasa**:
-   - Minta kode akses berdurasi (1, 3, 7, atau 30 hari) ke Super Admin.
-   - Ketik kode (contoh: `COINS-3D-A1B2C3`) di chat untuk aktivasi sesi.
+   - Minta kode akses berdurasi (1, 3, 7, atau 30 hari) ke Super Admin yang di-generate via perintah `/gencode`.
+   - Ketik kode token (contoh: `COINS-3D-A1B2C3`) di chat untuk aktivasi sesi.

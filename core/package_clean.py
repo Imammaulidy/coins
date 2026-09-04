@@ -17,6 +17,20 @@ def make_clean_package():
     EXCLUDE_EXTENSIONS = {".pyc", ".log", ".zip", ".tmp"}
 
     CLEAN_CONFIG = {
+        "telegram": {
+            "bot_token": "ISI_BOT_TOKEN_DISINI",
+            "admin_ids": []
+        },
+        "security": {
+            "user_sessions": {},
+            "access_codes": {}
+        },
+        "bot_settings": {
+            "default_base_php": 100,
+            "auto_check_interval_seconds": 5,
+            "invoice_timeout_minutes": 15,
+            "auto_random_name": True
+        },
         "accounts": [],
         "rates": {
             "base_rate": 60.55,
