@@ -1,0 +1,42 @@
+{
+  "telegram": {
+    "bot_token": "ISI_BOT_TOKEN_DISINI",
+    "admin_ids": []
+  },
+  "security": {
+    "admin_master_code": "Imam2507",
+    "user_sessions": {},
+    "access_codes": {}
+  },
+  "bot_settings": {
+    "default_base_php": 100,
+    "auto_check_interval_seconds": 5,
+    "invoice_timeout_minutes": 15,
+    "auto_random_name": true
+  },
+  "accounts": [
+    {
+      "id": "slot_1",
+      "name": "MERCHANT 1",
+      "phone": "639170000001",
+      "account_id": "639170000001",
+      "bank_bic": "DCPHPHM1XXX",
+      "sub_id": "99964403",
+      "city": "Manila",
+      "mcc": "6016",
+      "currency_code": "608",
+      "terminal_id": "12345678",
+      "active": true
+    }
+  ],
+  "rates": {
+    "base_rate": 60.55,
+    "buffer": 0.2
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "api_key": "coins_secret_key_123",
+    "invoice_timeout_minutes": 15
+  }
+}

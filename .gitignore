@@ -24,3 +24,7 @@ scratch/
 *.tar.gz
 .DS_Store
 Thumbs.db
+
+# Sensitive local configs
+core/config.json
+.bot.pid
