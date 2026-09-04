@@ -1510,6 +1510,11 @@ async function _stopAllCameraScanners() {
     } catch(e){}
 }
 
+function isMobileClient() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || (window.innerWidth <= 768 && ('ontouchstart' in window || navigator.maxTouchPoints > 0));
+}
+
 async function toggleInlineScanner(targetInputId, mode) {
     activeScannerTargetId = targetInputId;
     activeScannerMode = mode || 'address';
@@ -1522,58 +1527,95 @@ async function toggleInlineScanner(targetInputId, mode) {
     }
 
     panel.style.display = 'block';
-    if (status) status.innerText = '⏳ Mengaktifkan kamera scanner...';
+    if (status) status.innerText = '⏳ Mengaktifkan scanner barcode...';
 
     await _stopAllCameraScanners();
 
-    // Strategy 1: Try Native Browser WebRTC (Works on HTTPS or secure context)
-    if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    const isMobile = isMobileClient();
+
+    // Strategy 1: Try Native In-Browser WebRTC (Rear camera on mobile, default webcam on desktop)
+    // Works when context is secure (HTTPS, Termux, or Chrome flag enabled)
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
             const container = document.getElementById('inlineScannerVideo');
             container.style.height = '240px';
-            container.innerHTML = '';
+            container.style.position = 'relative';
+            container.style.background = '#000';
+            container.innerHTML = `
+                <div class="scanner-laser-line"></div>
+                <div class="scanner-reticle-box"></div>
+                <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.75);padding:4px 10px;border-radius:6px;font-size:11px;color:#10b981;font-weight:700;display:flex;align-items:center;gap:6px;z-index:6;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;animation:pulseDot 1s infinite;"></span>
+                    ${isMobile ? 'LIVE KAMERA HP' : 'LIVE KAMERA'}
+                </div>
+            `;
 
             _camVideo = document.createElement('video');
             _camVideo.setAttribute('playsinline', 'true');
             _camVideo.setAttribute('autoplay', 'true');
             _camVideo.setAttribute('muted', 'true');
             _camVideo.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-            container.appendChild(_camVideo);
+            container.insertBefore(_camVideo, container.firstChild);
 
             _camCanvas = document.createElement('canvas');
             _camCanvas.style.display = 'none';
             container.appendChild(_camCanvas);
 
-            _camStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-            });
-            _camVideo.srcObject = _camStream;
-            await _camVideo.play();
+            let stream = null;
+            if (isMobile) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+                    });
+                } catch(e1) {
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    } catch(e2) {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    }
+                }
+            } else {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+            }
 
-            if (status) status.innerText = '🔍 Arahkan kamera ke QR Code...';
-            _camScanning = true;
-            _camLastDetect = 0;
-            requestAnimationFrame(_scanInlineLoop);
-            return;
+            if (stream) {
+                _camStream = stream;
+                _camVideo.srcObject = _camStream;
+                await _camVideo.play();
+
+                if (status) status.innerText = isMobile
+                    ? '🔍 Arahkan kamera ponsel ke QR Code...'
+                    : '🔍 Arahkan kamera ke QR Code...';
+                _camScanning = true;
+                _camLastDetect = 0;
+                requestAnimationFrame(_scanInlineLoop);
+                return;
+            }
         } catch (err) {
-            console.log('Native camera WebRTC failed, falling back to hardware backend:', err);
+            console.log('Native camera WebRTC failed:', err);
         }
     }
 
     // Strategy 2: Backend Direct Hardware WebCam Scanner (Logi C270 HD WebCam)
-    try {
-        const startRes = await fetch('/api/camera/start', { method: 'POST' });
-        const startData = await startRes.json();
-        if (startData.success) {
-            renderHardwareCameraUI(targetInputId, mode);
-            return;
+    // PERHATIAN: Fitur ini HANYA untuk Desktop PC host!
+    // Perangkat Android/Mobile DILARANG menyalakan webcam PC server secara otomatis!
+    if (!isMobile) {
+        try {
+            const startRes = await fetch('/api/camera/start', { method: 'POST' });
+            const startData = await startRes.json();
+            if (startData.success) {
+                renderHardwareCameraUI(targetInputId, mode);
+                return;
+            }
+        } catch(err) {
+            console.log('Backend camera start error:', err);
         }
-    } catch(err) {
-        console.log('Backend camera start error:', err);
     }
 
-    // Strategy 3: Fallback UI (Photo picker & Paste)
-    renderScannerFallbackUI(targetInputId, mode);
+    // Strategy 3: Mobile Scanner UI (Khusus Ponsel Android/iOS)
+    renderScannerFallbackUI(targetInputId, mode, isMobile);
 }
 
 function renderHardwareCameraUI(targetInputId, mode) {
@@ -1590,7 +1632,7 @@ function renderHardwareCameraUI(targetInputId, mode) {
         <div class="scanner-reticle-box"></div>
         <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.75);padding:4px 10px;border-radius:6px;font-size:11px;color:#10b981;font-weight:700;display:flex;align-items:center;gap:6px;z-index:6;">
             <span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;animation:pulseDot 1s infinite;"></span>
-            LIVE WEBCAM AKTIF
+            LIVE WEBCAM PC AKTIF
         </div>
         <div style="position:absolute;bottom:8px;right:8px;display:flex;gap:6px;z-index:6;">
             <label style="background:rgba(15,23,42,0.85);color:#38bdf8;border:1px solid rgba(56,189,248,0.5);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
@@ -1601,7 +1643,7 @@ function renderHardwareCameraUI(targetInputId, mode) {
     `;
 
     if (status) {
-        status.innerText = '📷 WebCam Aktif — Arahkan barcode ke depan kamera...';
+        status.innerText = '📷 WebCam PC Aktif — Arahkan barcode ke depan kamera...';
     }
 
     // Poll status from backend
@@ -1622,38 +1664,92 @@ function renderHardwareCameraUI(targetInputId, mode) {
     }, 200);
 }
 
-function renderScannerFallbackUI(targetInputId, mode) {
+function renderScannerFallbackUI(targetInputId, mode, isMobile) {
     const container = document.getElementById('inlineScannerVideo');
     const status = document.getElementById('inlineScannerStatus');
-    if (container) {
-        container.style.height = 'auto';
+    if (!container) return;
+
+    container.style.height = 'auto';
+    container.style.background = 'rgba(15, 23, 42, 0.6)';
+
+    if (isMobile) {
+        container.innerHTML = `
+            <div style="padding:16px 12px;text-align:center;color:#fff;font-size:12px;line-height:1.5;">
+                <div style="font-size:32px;margin-bottom:6px;">📱</div>
+                <div style="font-weight:800;font-size:14px;color:#38bdf8;margin-bottom:4px;">Pindai Barcode via Ponsel</div>
+                <p style="color:var(--text-muted);font-size:11px;margin-bottom:14px;max-width:320px;margin-left:auto;margin-right:auto;">
+                    Pindai langsung menggunakan kamera ponsel Anda atau pilih dari galeri.
+                </p>
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;">
+                    <label style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border-radius:10px;cursor:pointer;font-weight:800;font-size:12.5px;box-shadow:0 4px 14px rgba(14,165,233,0.4);">
+                        📸 Buka Kamera HP
+                        <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleQRFileInput(event, '${targetInputId}', '${mode}')">
+                    </label>
+                    <label style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#e2e8f0;border-radius:10px;cursor:pointer;font-weight:700;font-size:11.5px;">
+                        📁 Galeri Foto
+                        <input type="file" accept="image/*" style="display:none;" onchange="handleQRFileInput(event, '${targetInputId}', '${mode}')">
+                    </label>
+                </div>
+                <div style="background:rgba(2,6,23,0.6);border:1px solid rgba(56,189,248,0.2);border-radius:8px;padding:10px 12px;text-align:left;font-size:10.5px;color:#94a3b8;line-height:1.45;max-width:350px;margin:0 auto;">
+                    <div style="font-weight:800;color:#38bdf8;margin-bottom:4px;display:flex;align-items:center;gap:5px;">
+                        <span>💡</span> Panduan Kamera Live Tanpa Jepret di HP:
+                    </div>
+                    <div>Browser Chrome membatasi video live pada koneksi HTTP LAN (192.168.x.x).</div>
+                    <div style="margin-top:4px;color:#cbd5e1;">
+                        • <b>Akses HTTPS / Ngrok:</b> Buka link https (Live kamera HP aktif otomatis).<br>
+                        • <b>Jalankan di Termux HP:</b> Buka link lokal HP (Live kamera HP aktif otomatis).<br>
+                        • <b>Atau Aktifkan Flag Chrome di HP:</b> Ketik <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code> di Chrome HP, masukkan <code>${window.location.origin}</code>, pilih <b>Enabled</b> lalu Relaunch.
+                    </div>
+                </div>
+                <div style="margin-top:12px;">
+                    <button type="button" onclick="startHardwareCameraFallback('${targetInputId}', '${mode}')" style="background:none;border:none;color:#64748b;font-size:10px;cursor:pointer;text-decoration:underline;">
+                        🖥️ Sambungkan ke WebCam PC (Server)
+                    </button>
+                </div>
+            </div>
+        `;
+        if (status) {
+            status.innerText = '💡 Ketuk "Buka Kamera HP" untuk memindai barcode.';
+        }
+    } else {
         container.innerHTML = `
             <div style="padding:16px 12px;text-align:center;color:#fff;font-size:12px;line-height:1.5;">
                 <div style="font-size:28px;margin-bottom:6px;">📷</div>
                 <div style="font-weight:800;font-size:13px;color:#38bdf8;margin-bottom:4px;">Pindai QR Code Barcode</div>
                 <p style="color:var(--text-muted);font-size:11px;margin-bottom:12px;max-width:340px;margin-left:auto;margin-right:auto;">
-                    Arahkan kamera ponsel Anda ke QR code atau ambil dari penyimpanan galeri.
+                    Pilih gambar QR code dari penyimpanan atau tekan Ctrl+V untuk paste dari clipboard.
                 </p>
                 <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
                     <label style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border-radius:8px;cursor:pointer;font-weight:800;font-size:11.5px;box-shadow:0 4px 12px rgba(14,165,233,0.35);">
-                        📸 Kamera Scanner
-                        <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleQRFileInput(event, '${targetInputId}', '${mode}')">
-                    </label>
-                    <label style="display:inline-flex;align-items:center;gap:6px;padding:9px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#e2e8f0;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;">
-                        📁 Galeri Foto
+                        📁 Pilih Gambar
                         <input type="file" accept="image/*" style="display:none;" onchange="handleQRFileInput(event, '${targetInputId}', '${mode}')">
                     </label>
                 </div>
                 <div style="margin-top:10px;font-size:10px;color:var(--text-muted);line-height:1.4;">
-                    💡 Di Termux (<b style="color:#38bdf8;">localhost:5000</b>): Video kamera live aktif otomatis.<br>
                     💡 Di Komputer: Bisa tekan <kbd style="background:#1e293b;padding:2px 5px;border-radius:4px;color:#38bdf8;">Ctrl + V</kbd> untuk paste screenshot.
                 </div>
             </div>
         `;
+        if (status) {
+            status.innerText = '💡 Pilih gambar atau paste barcode.';
+        }
     }
-    if (status) {
-        status.innerText = '💡 Ketuk tombol Kamera Scanner untuk memindai barcode.';
+}
+
+async function startHardwareCameraFallback(targetInputId, mode) {
+    const status = document.getElementById('inlineScannerStatus');
+    if (status) status.innerText = '⏳ Menghubungkan ke WebCam PC...';
+    try {
+        const startRes = await fetch('/api/camera/start', { method: 'POST' });
+        const startData = await startRes.json();
+        if (startData.success) {
+            renderHardwareCameraUI(targetInputId, mode);
+            return;
+        }
+    } catch(err) {
+        console.log('Backend camera start error:', err);
     }
+    alert('❌ Tidak dapat terhubung ke WebCam PC.');
 }
 
 function closeInlineScanner() {
