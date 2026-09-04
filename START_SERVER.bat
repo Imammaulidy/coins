@@ -12,7 +12,7 @@ echo.
 if not exist ".venv\Scripts\python.exe" (
     echo [INFO] Virtual Environment belum ditemukan.
     echo Menjalankan instalasi requirement otomatis...
-    call core\INSTALL_REQUIREMENTS.bat
+    call INSTALL_REQUIREMENTS.bat
     if errorlevel 1 goto ERROR
 )
 

@@ -1,7 +1,7 @@
 @echo off
 title Install Modul dan Requirement - Coins.ph Gateway
 color 0a
-cd /d "%~dp0.."
+cd /d "%~dp0"
 
 echo ======================================================================
 echo           INSTALL REQUIREMENT / DEPENDENCIES COINS.PH GATEWAY

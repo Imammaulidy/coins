@@ -64,6 +64,7 @@ Payment Gateway mandiri, POS Kasir Web resmi berstandar nasional Filipina (**QR 
 COINS_PAYMENT_GATEWAY/
 ├── run.bat                   # 🚀 [PC] 1-Klik Pintar Launcher Bot Telegram (Auto-Venv, Auto-Pip, Run)
 ├── START_SERVER.bat          # 🌐 [PC] Launcher Server Web POS & Dashboard (Port 5000)
+├── INSTALL_REQUIREMENTS.bat  # 📦 [PC] Installer Dependensi Manual Python
 ├── README.md                 # 📖 Dokumentasi Lengkap
 ├── .gitignore                # 🔒 Proteksi Kredensial (config.json & database aman)
 │
@@ -78,7 +79,6 @@ COINS_PAYMENT_GATEWAY/
 │   ├── config.json           # ⚙️ Konfigurasi Aktif (Private / Gitignored)
 │   ├── config.example.json   # 📄 Template Konfigurasi Publik
 │   ├── requirements.txt      # 📦 Daftar Dependensi Python
-│   ├── INSTALL_REQUIREMENTS.bat # 📦 [PC] Installer Dependensi Manual
 │   ├── PAKET_KOSONGAN.bat    # 📦 [PC] Generator Paket Ekspor Bersih
 │   ├── test_system.py        # 🧪 Automated Test Suite Sistem Web
 │   ├── static/               # 🎨 Aset Web Frontend (JS, CSS)
