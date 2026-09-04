@@ -314,9 +314,13 @@
         .send-row-inputs {
             display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
         }
-        .send-col-addr { flex: 2; min-width: 260px; }
-        .send-col-amt { flex: 1.2; min-width: 180px; }
-        .send-col-btn { flex: 0 0 auto; min-width: 140px; }
+        
+        .send-col-addr { flex: 1.8; min-width: 260px; }
+        .send-col-amt { flex: 1.8; min-width: 260px; }
+        .send-amt-btn-combo { display: flex; gap: 8px; align-items: center; }
+        .send-amt-btn-combo .form-input { flex: 1; min-width: 0; }
+        .send-amt-btn-combo .btn-send-usdc { width: auto; flex: 0 0 auto; padding: 0 16px; height: 38px; margin: 0; white-space: nowrap; }
+
         .send-field-label {
             font-size: 10px; color: var(--text-muted); font-weight: 700;
             display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
@@ -572,83 +576,267 @@
 
         /* MOBILE VIEW COMPACT (< 768px) */
         @media (max-width: 768px) {
-            body { padding: 10px 8px 24px; }
+            body { padding: 8px 6px 20px; }
             .top-navbar {
-                padding: 8px 12px;
-                margin-bottom: 12px;
+                padding: 6px 10px;
+                margin-bottom: 10px;
             }
-            .brand-name { font-size: 14px; }
+            .brand-name { font-size: 13px; }
             .brand-sub { display: none; }
-            .btn-nav-add { padding: 6px 10px; font-size: 11px; }
-            .rate-pill { padding: 4px 8px; }
-            .rate-text { font-size: 10px; }
+            .btn-nav-add { padding: 5px 9px; font-size: 10.5px; }
+            .rate-pill { padding: 3px 6px; }
+            .rate-text { font-size: 9.5px; }
 
             .wallet-horizontal-panel {
-                padding: 12px 10px;
-                margin-bottom: 14px;
+                padding: 10px 8px;
+                margin-bottom: 10px;
+                border-radius: 10px;
             }
-            .wallet-title { font-size: 13px; }
-            .wallet-subtitle { font-size: 10px; }
+            .wallet-title { font-size: 12px; }
+            .wallet-subtitle { font-size: 9.5px; }
             .wallet-connect-row {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 8px;
+                gap: 6px;
             }
             .btn-connect-wallet {
                 width: 100%;
                 text-align: center;
+                padding: 9px;
+                font-size: 12px;
             }
             .wallet-connected-top-row {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 8px;
+                gap: 6px;
             }
             .net-btn-group {
                 display: flex;
                 width: 100%;
+                gap: 4px;
             }
             .net-btn {
                 flex: 1;
                 text-align: center;
-                padding: 6px 4px;
-                font-size: 10px;
+                padding: 5px 2px;
+                font-size: 9.5px;
             }
+
+            /* 1-ROW COMPACT WALLET INFO */
             .wallet-info-grid-horizontal {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 6px;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 4px;
+                width: 100%;
             }
             .wallet-info-grid-horizontal .winfo-box {
                 min-width: 0;
-                padding: 6px 8px;
+                padding: 4px 5px;
+                text-align: center;
+                border-radius: 6px;
+            }
+            .wallet-info-grid-horizontal .wlabel {
+                font-size: 8px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 1px;
+            }
+            .wallet-info-grid-horizontal .wval {
+                font-size: 10.5px;
+                font-weight: 800;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .wallet-send-stretched {
+                padding: 10px 8px;
+                border-radius: 10px;
             }
             .send-row-inputs {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 10px;
+                gap: 8px;
             }
-            .send-col-addr, .send-col-amt, .send-col-btn {
+            .send-col-addr, .send-col-amt {
                 width: 100%;
                 min-width: 0;
             }
-            .send-col-btn label { display: none; }
-            .btn-send-usdc {
-                width: 100%;
-                justify-content: center;
+            .send-field-label {
+                font-size: 9px;
+                margin-bottom: 2px;
+            }
+            .input-with-action input {
+                font-size: 11px !important;
+                height: 36px;
+            }
+            .input-with-action button, .input-with-action label {
+                padding: 0 8px;
+                font-size: 10.5px;
+                height: 36px;
             }
 
+            /* SEND AMOUNT & BUTTON COMPACT SIDE-BY-SIDE IN ONE ROW */
+            .send-amt-btn-combo {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+            }
+            .send-amt-btn-combo .form-input {
+                flex: 1;
+                min-width: 0;
+                height: 36px;
+                font-size: 12px;
+                padding: 6px 8px;
+                margin: 0;
+            }
+            .send-amt-btn-combo .btn-send-usdc {
+                flex: 0 0 auto;
+                width: auto;
+                height: 36px;
+                padding: 0 12px;
+                font-size: 11.5px;
+                font-weight: 800;
+                white-space: nowrap;
+                margin: 0;
+                border-radius: 8px;
+            }
+
+            /* 2-COLUMN SLOTS GRID: SLOT 1 & SLOT 2 FIT SIDE-BY-SIDE ON MOBILE */
             .slots-grid {
-                grid-template-columns: 1fr;
-                gap: 14px;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 6px;
             }
             .slot-card {
-                padding: 14px;
+                padding: 8px 6px;
+                border-radius: 10px;
+                min-width: 0;
+            }
+            .slot-header {
+                position: relative;
+                padding-right: 20px;
+                margin-bottom: 4px;
+            }
+            .slot-header .btn-delete-slot {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 18px;
+                height: 18px;
+                font-size: 10px;
+                line-height: 1;
+            }
+            .slot-badge {
+                font-size: 8px;
+                padding: 1px 4px;
+            }
+            .slot-name {
+                font-size: 10.5px;
+                font-weight: 800;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-top: 2px;
+            }
+            .slot-phone {
+                font-size: 8.5px;
+            }
+            .merchant-name-bar {
+                padding: 3px 4px;
+                font-size: 8.5px;
+                margin-bottom: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 2px;
+                border-radius: 6px;
+            }
+            .merchant-name-bar .mname-text {
+                font-size: 8px;
+                max-width: 70px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .btn-random-name-inline {
+                padding: 2px 4px;
+                font-size: 8px;
+                white-space: nowrap;
+            }
+            .slot-tools-row {
+                display: flex;
+                gap: 3px;
+                margin-bottom: 4px;
+            }
+            .slot-nominal-input {
+                font-size: 10px;
+                padding: 2px 4px;
+                height: 25px;
+                flex: 1;
+                min-width: 0;
+            }
+            .btn-slot-set {
+                padding: 2px 5px;
+                font-size: 9px;
+                height: 25px;
+            }
+            .btn-lightning-inc {
+                padding: 2px 4px;
+                font-size: 9px;
+                height: 25px;
+                white-space: nowrap;
+            }
+            .auto-random-slot-row {
+                font-size: 8px;
+                margin-bottom: 4px;
+            }
+            .auto-random-slot-row input {
+                width: 11px;
+                height: 11px;
+            }
+            .qr-card-box {
+                padding: 4px;
+                border-radius: 6px;
             }
             .qr-card-box img {
-                max-width: 210px;
+                width: 100%;
+                max-width: 135px;
+                height: auto;
+                aspect-ratio: 1/1;
+                display: block;
+                margin: 0 auto;
+            }
+            .usdc-calc-box {
+                padding: 4px;
+                margin-top: 4px;
+                border-radius: 6px;
+            }
+            .usdc-calc-title {
+                font-size: 7.5px;
+                margin-bottom: 1px;
+            }
+            .usdc-calc-amount {
+                font-size: 10px;
+                font-weight: 800;
+            }
+            .usdc-calc-rate {
+                font-size: 7px;
+            }
+            .slot-card-actions {
+                display: flex;
+                gap: 3px;
+                margin-top: 4px;
+            }
+            .slot-card-actions button {
+                flex: 1;
+                padding: 4px 2px;
+                font-size: 8px;
+                border-radius: 5px;
             }
         }
-    
+
         @keyframes laserScan {
             0% { top: 12%; opacity: 0.85; }
             50% { top: 88%; opacity: 1; }
@@ -891,13 +1079,12 @@
                             <button type="button" class="btn-amount-shortcut-mini" onclick="fillSendAmountMax()" title="Kirim MAX saldo">💯 MAX</button>
                         </div>
                     </div>
-                    <input type="number" id="wsendAmount" class="form-input" step="0.0001" min="0.0001" placeholder="Contoh: 1.1524" style="margin:0;font-weight:700;color:#10b981;" onkeydown="if(event.key==='Enter'){event.preventDefault(); sendWalletToken();}">
-                </div>
-                <div class="send-col-btn">
-                    <label class="send-field-label" style="opacity:0;">AKSI</label>
-                    <button type="button" class="btn-send-usdc" onclick="sendWalletToken()" id="btnSendWalletUsdc">
-                        🚀 Kirim Token
-                    </button>
+                    <div class="send-amt-btn-combo">
+                        <input type="number" id="wsendAmount" class="form-input" step="0.0001" min="0.0001" placeholder="Contoh: 1.1524" style="margin:0;font-weight:700;color:#10b981;flex:1;min-width:0;" onkeydown="if(event.key==='Enter'){event.preventDefault(); sendWalletToken();}">
+                        <button type="button" class="btn-send-usdc" onclick="sendWalletToken()" id="btnSendWalletUsdc">
+                            🚀 Kirim Token
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1290,23 +1477,7 @@ function parsePKFromQR(raw) {
 async function triggerWalletScan(targetId, mode) {
     activeScannerTargetId = targetId;
     activeScannerMode = mode || 'address';
-
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    // Check if secure context and mediaDevices is supported for live camera
-    if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        toggleInlineScanner(targetId, mode);
-    } else if (isMobile) {
-        // Direct native camera snap on mobile without browser blocking
-        const camInput = (targetId === 'winputPk')
-            ? document.getElementById('scanCameraPkDirectInput')
-            : document.getElementById('scanCameraDirectInput');
-        if (camInput) camInput.click();
-        else toggleInlineScanner(targetId, mode);
-    } else {
-        // Desktop HTTP mode: open scanner panel with photo upload & paste support
-        toggleInlineScanner(targetId, mode);
-    }
+    toggleInlineScanner(targetId, mode);
 }
 
 let _backendCamPoll = null;
@@ -1457,26 +1628,31 @@ function renderScannerFallbackUI(targetInputId, mode) {
     if (container) {
         container.style.height = 'auto';
         container.innerHTML = `
-            <div style="padding:20px 16px;text-align:center;color:#fff;font-size:12px;line-height:1.5;">
-                <div style="font-size:32px;margin-bottom:8px;">📷</div>
-                <div style="font-weight:800;font-size:13px;color:#38bdf8;margin-bottom:6px;">Pindai QR Code Barcode</div>
-                <p style="color:var(--text-muted);font-size:11px;margin-bottom:14px;max-width:380px;margin-left:auto;margin-right:auto;">
-                    Ambil foto barcode langsung menggunakan kamera atau pilih gambar barcode QR Code dari penyimpanan.
+            <div style="padding:16px 12px;text-align:center;color:#fff;font-size:12px;line-height:1.5;">
+                <div style="font-size:28px;margin-bottom:6px;">📷</div>
+                <div style="font-weight:800;font-size:13px;color:#38bdf8;margin-bottom:4px;">Pindai QR Code Barcode</div>
+                <p style="color:var(--text-muted);font-size:11px;margin-bottom:12px;max-width:340px;margin-left:auto;margin-right:auto;">
+                    Arahkan kamera ponsel Anda ke QR code atau ambil dari penyimpanan galeri.
                 </p>
-                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-                    <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border-radius:9px;cursor:pointer;font-weight:800;font-size:12px;box-shadow:0 4px 14px rgba(14,165,233,0.4);">
-                        📸 Ambil Foto / Pilih Gambar
+                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                    <label style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border-radius:8px;cursor:pointer;font-weight:800;font-size:11.5px;box-shadow:0 4px 12px rgba(14,165,233,0.35);">
+                        📸 Kamera Scanner
                         <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleQRFileInput(event, '${targetInputId}', '${mode}')">
                     </label>
+                    <label style="display:inline-flex;align-items:center;gap:6px;padding:9px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#e2e8f0;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;">
+                        📁 Galeri Foto
+                        <input type="file" accept="image/*" style="display:none;" onchange="handleQRFileInput(event, '${targetInputId}', '${mode}')">
+                    </label>
                 </div>
-                <div style="margin-top:10px;font-size:10px;color:var(--text-muted);">
-                    💡 Di Komputer: Anda juga bisa tekan <kbd style="background:#1e293b;padding:2px 6px;border-radius:4px;color:#38bdf8;">Ctrl + V</kbd> untuk paste screenshot QR code!
+                <div style="margin-top:10px;font-size:10px;color:var(--text-muted);line-height:1.4;">
+                    💡 Di Termux (<b style="color:#38bdf8;">localhost:5000</b>): Video kamera live aktif otomatis.<br>
+                    💡 Di Komputer: Bisa tekan <kbd style="background:#1e293b;padding:2px 5px;border-radius:4px;color:#38bdf8;">Ctrl + V</kbd> untuk paste screenshot.
                 </div>
             </div>
         `;
     }
     if (status) {
-        status.innerText = '💡 Klik tombol di atas atau paste gambar QR code langsung.';
+        status.innerText = '💡 Ketuk tombol Kamera Scanner untuk memindai barcode.';
     }
 }
 

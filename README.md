@@ -80,17 +80,26 @@ COINS_PAYMENT_GATEWAY/
    Double-click file `START_SERVER.bat`. Server akan mendeteksi IP lokal otomatis dan membuka browser ke `http://<IP-LAN>:5000/pos`.
 
 ### B. Di Android (Termux)
-1. Buka aplikasi Termux lalu salin folder proyek.
-2. Masuk ke folder TERMUX dan jalankan installer:
-   ```bash
-   cd TERMUX
-   bash termuxsetup.sh
-   ```
-3. Jalankan server:
-   ```bash
-   bash run.sh
-   ```
-4. Buka browser ponsel dan akses `http://<IP-HP>:5000/pos`.
+
+Buka aplikasi **Termux**, lalu copy-paste perintah berikut ke dalam terminal:
+
+#### 1. Perintah Instalasi Dependensi (Siap Copy):
+```bash
+cd coins/TERMUX && bash termuxsetup.sh
+```
+
+#### 2. Perintah Menjalankan Server (Siap Copy):
+```bash
+cd coins/TERMUX && bash run.sh
+```
+
+#### 💡 Perintah 1-Baris Praktis (Setup & Langsung Jalankan):
+```bash
+cd coins/TERMUX && bash termuxsetup.sh && bash run.sh
+```
+
+Setelah server aktif, buka browser ponsel Anda dan akses:
+`http://<IP-HP>:5000/pos`
 
 ---
 
