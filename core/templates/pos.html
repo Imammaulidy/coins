@@ -1849,45 +1849,61 @@ function closeZoomModal() {
 // SLOTS MANAGEMENT
 // ============================================================
 async function handleSaveAccount(event) {
-    event.preventDefault();
-    const id = document.getElementById('m_id').value.trim();
-    const name = document.getElementById('m_name').value.trim();
-    const phone = document.getElementById('m_phone').value.trim();
-    const city = document.getElementById('m_city').value.trim() || 'Manila';
+    if (event) event.preventDefault();
+    const nameInput = document.getElementById('new_name') || document.getElementById('m_name');
+    const phoneInput = document.getElementById('new_phone') || document.getElementById('m_phone');
+    const cityInput = document.getElementById('new_city') || document.getElementById('m_city');
 
-    if (!id || !name || !phone) {
-        alert('Mohon lengkapi data ID Slot, Nama, dan Nomor HP!');
+    const name = nameInput ? nameInput.value.trim() : '';
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+    const city = cityInput && cityInput.value.trim() ? cityInput.value.trim() : 'Manila';
+
+    if (!name || !phone) {
+        alert('Mohon lengkapi Nama Pemilik Akun dan Nomor HP!');
         return;
     }
 
+    const saveBtn = document.querySelector('#addAccountForm button[type="submit"]') || document.querySelector('.btn-modal-save');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Menyimpan...';
+    }
+
     try {
-        const res = await fetch('/api/account/add', {
+        const res = await fetch('/api/accounts', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                id: id,
                 name: name,
-                account_id: phone,
-                city: city,
-                currency_code: '608',
-                mcc: '6016'
+                display_name: name,
+                phone: phone,
+                city: city
             })
         });
         const data = await res.json();
         if (data.success) {
+            closeAddModal();
             location.reload();
         } else {
             alert('Gagal menambah slot: ' + (data.message || 'Error'));
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Simpan Slot';
+            }
         }
     } catch(err) {
         alert('Terjadi kesalahan jaringan: ' + err.message);
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Simpan Slot';
+        }
     }
 }
 
 async function deleteSlot(slotId) {
     if (!confirm(`Hapus slot akun ${slotId}?`)) return;
     try {
-        const res = await fetch(`/api/account/${slotId}`, { method: 'DELETE' });
+        const res = await fetch(`/api/accounts/${slotId}`, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) {
             location.reload();

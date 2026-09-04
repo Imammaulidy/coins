@@ -315,13 +315,14 @@ def api_get_accounts():
 
 
 @app.route("/api/accounts", methods=["POST"])
+@app.route("/api/account/add", methods=["POST"])
 def api_add_account():
     data = request.get_json(silent=True) or {}
     name = data.get("name")
-    phone = data.get("phone")
+    phone = data.get("phone") or data.get("account_id")
     city = data.get("city", "Manila")
-    display_name = data.get("display_name")
-    slot_id = data.get("slot_id")
+    display_name = data.get("display_name") or name
+    slot_id = data.get("slot_id") or data.get("id")
 
     if not name or not phone:
         return jsonify({"success": False, "message": "Nama dan nomor HP wajib diisi."}), 400
@@ -334,6 +335,7 @@ def api_add_account():
 
 
 @app.route("/api/accounts/<slot_id>", methods=["DELETE"])
+@app.route("/api/account/<slot_id>", methods=["DELETE"])
 def api_delete_account(slot_id):
     ok = delete_account(slot_id)
     if ok:

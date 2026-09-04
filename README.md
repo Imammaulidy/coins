@@ -35,7 +35,7 @@ Payment Gateway mandiri dan POS Kasir Web resmi berstandar nasional Filipina (**
   - Menampilkan estimasi jumlah transfer USDC/USDT di setiap kartu slot secara live.
 
 ### 3. 🛡️ Pure Dynamic IP:Port LAN Binding
-- Server berjalan secara murni pada IP lokal dinamis (`http://<IP-LAN>:5000`), bebas dari ketergantungan `localhost` atau port tidak resmi.
+- Server berjalan secara murni pada IP jaringan LAN dinamis (`http://<IP-LAN>:5000`).
 - Dapat diakses langsung secara multi-device dari PC kasir, laptop operator, tablet, maupun smartphone Android/iOS di jaringan WiFi / LAN yang sama.
 
 ---
