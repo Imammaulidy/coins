@@ -5,3 +5,5 @@ requests>=2.31.0
 zxing-cpp>=3.0.0
 web3>=6.0.0
 eth-account>=0.8.0
+opencv-python-headless>=4.8.0
+numpy>=1.24.0

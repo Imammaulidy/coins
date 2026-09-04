@@ -4,7 +4,8 @@ import uuid
 import threading
 from io import BytesIO
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, redirect, send_file, url_for
+from flask import Flask, request, jsonify, render_template, redirect, send_file, url_for, Response
+from camera_scanner import camera_scanner
 from qr_engine import (
     load_config,
     save_config,
@@ -553,6 +554,43 @@ def api_qr_decode():
         return jsonify({"success": False, "message": "QR Code tidak ditemukan pada gambar. Pastikan gambar jelas dan tidak blur."}), 404
     except Exception as e:
         return jsonify({"success": False, "message": f"Gagal decode QR: {str(e)}"}), 500
+
+
+# ============================================================
+# LIVE HARDWARE WEBCAM SCANNER (DIRECT STREAM & AUTO-DECODE)
+# ============================================================
+
+@app.route("/api/camera/start", methods=["POST"])
+def api_camera_start():
+    """Start hardware webcam capture."""
+    ok = camera_scanner.start()
+    return jsonify({"success": ok, "message": "Kamera aktif" if ok else "Gagal mengaktifkan kamera"})
+
+
+@app.route("/api/camera/stream")
+def api_camera_stream():
+    """Live MJPEG video stream with realtime barcode overlay."""
+    def generate():
+        while camera_scanner.is_running:
+            frame = camera_scanner.get_frame()
+            if frame:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            time.sleep(0.035)
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route("/api/camera/status", methods=["GET"])
+def api_camera_status():
+    """Check detection status of current camera frame."""
+    return jsonify(camera_scanner.get_status())
+
+
+@app.route("/api/camera/stop", methods=["POST"])
+def api_camera_stop():
+    """Stop camera hardware and release device."""
+    camera_scanner.stop()
+    return jsonify({"success": True, "message": "Kamera dinonaktifkan"})
 
 
 @app.route("/api/matrix", methods=["GET"])

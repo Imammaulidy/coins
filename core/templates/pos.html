@@ -648,6 +648,41 @@
                 max-width: 210px;
             }
         }
+    
+        @keyframes laserScan {
+            0% { top: 12%; opacity: 0.85; }
+            50% { top: 88%; opacity: 1; }
+            100% { top: 12%; opacity: 0.85; }
+        }
+        .scanner-laser-line {
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #10b981, #38bdf8, #10b981, transparent);
+            box-shadow: 0 0 12px #10b981, 0 0 24px #38bdf8;
+            animation: laserScan 2s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .scanner-reticle-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            border: 2px dashed rgba(56, 189, 248, 0.7);
+            border-radius: 12px;
+            pointer-events: none;
+            box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.2);
+            z-index: 4;
+        }
+        @keyframes pulseDot {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.3); }
+            100% { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -1238,15 +1273,17 @@ function applyDrawerCustomNominal() {
 // ============================================================
 function parseEVMAddressFromQR(raw) {
     if (!raw) return '';
-    const match = raw.match(/0x[a-fA-F0-9]{40}/);
+    const match = raw.match(/0x[a-fA-F0-9]{40}/i);
     if (match) return match[0];
+    const matchNo0x = raw.match(/\b[a-fA-F0-9]{40}\b/i);
+    if (matchNo0x) return '0x' + matchNo0x[0];
     return raw.trim();
 }
 
 function parsePKFromQR(raw) {
     if (!raw) return '';
-    const match = raw.match(/(?:0x)?[a-fA-F0-9]{64}/);
-    if (match) return match[0];
+    const match = raw.match(/(?:0x)?([a-fA-F0-9]{64})/i);
+    if (match) return '0x' + match[1];
     return raw.trim();
 }
 
@@ -1272,6 +1309,8 @@ async function triggerWalletScan(targetId, mode) {
     }
 }
 
+let _backendCamPoll = null;
+
 async function _stopNativeCamera() {
     _camScanning = false;
     if (_camStream) {
@@ -1289,6 +1328,17 @@ async function _stopNativeCamera() {
     }
 }
 
+async function _stopAllCameraScanners() {
+    await _stopNativeCamera();
+    if (_backendCamPoll) {
+        clearInterval(_backendCamPoll);
+        _backendCamPoll = null;
+    }
+    try {
+        fetch('/api/camera/stop', { method: 'POST' });
+    } catch(e){}
+}
+
 async function toggleInlineScanner(targetInputId, mode) {
     activeScannerTargetId = targetInputId;
     activeScannerMode = mode || 'address';
@@ -1301,45 +1351,104 @@ async function toggleInlineScanner(targetInputId, mode) {
     }
 
     panel.style.display = 'block';
-    if (status) status.innerText = '⏳ Membuka scanner...';
+    if (status) status.innerText = '⏳ Mengaktifkan kamera scanner...';
 
+    await _stopAllCameraScanners();
+
+    // Strategy 1: Try Native Browser WebRTC (Works on HTTPS or secure context)
+    if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+            const container = document.getElementById('inlineScannerVideo');
+            container.style.height = '240px';
+            container.innerHTML = '';
+
+            _camVideo = document.createElement('video');
+            _camVideo.setAttribute('playsinline', 'true');
+            _camVideo.setAttribute('autoplay', 'true');
+            _camVideo.setAttribute('muted', 'true');
+            _camVideo.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+            container.appendChild(_camVideo);
+
+            _camCanvas = document.createElement('canvas');
+            _camCanvas.style.display = 'none';
+            container.appendChild(_camCanvas);
+
+            _camStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+            });
+            _camVideo.srcObject = _camStream;
+            await _camVideo.play();
+
+            if (status) status.innerText = '🔍 Arahkan kamera ke QR Code...';
+            _camScanning = true;
+            _camLastDetect = 0;
+            requestAnimationFrame(_scanInlineLoop);
+            return;
+        } catch (err) {
+            console.log('Native camera WebRTC failed, falling back to hardware backend:', err);
+        }
+    }
+
+    // Strategy 2: Backend Direct Hardware WebCam Scanner (Logi C270 HD WebCam)
     try {
-        await _stopNativeCamera();
-
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            renderScannerFallbackUI(targetInputId, mode);
+        const startRes = await fetch('/api/camera/start', { method: 'POST' });
+        const startData = await startRes.json();
+        if (startData.success) {
+            renderHardwareCameraUI(targetInputId, mode);
             return;
         }
-
-        const container = document.getElementById('inlineScannerVideo');
-        container.style.height = '240px';
-        container.innerHTML = '';
-
-        _camVideo = document.createElement('video');
-        _camVideo.setAttribute('playsinline', 'true');
-        _camVideo.setAttribute('autoplay', 'true');
-        _camVideo.setAttribute('muted', 'true');
-        _camVideo.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-        container.appendChild(_camVideo);
-
-        _camCanvas = document.createElement('canvas');
-        _camCanvas.style.display = 'none';
-        container.appendChild(_camCanvas);
-
-        _camStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-        });
-        _camVideo.srcObject = _camStream;
-        await _camVideo.play();
-
-        if (status) status.innerText = '🔍 Arahkan kamera ke QR Code...';
-        _camScanning = true;
-        _camLastDetect = 0;
-        requestAnimationFrame(_scanInlineLoop);
-
-    } catch (err) {
-        renderScannerFallbackUI(targetInputId, mode);
+    } catch(err) {
+        console.log('Backend camera start error:', err);
     }
+
+    // Strategy 3: Fallback UI (Photo picker & Paste)
+    renderScannerFallbackUI(targetInputId, mode);
+}
+
+function renderHardwareCameraUI(targetInputId, mode) {
+    const container = document.getElementById('inlineScannerVideo');
+    const status = document.getElementById('inlineScannerStatus');
+    if (!container) return;
+
+    container.style.height = '260px';
+    container.style.position = 'relative';
+    container.style.background = '#000';
+    container.innerHTML = `
+        <img id="liveCamStreamImg" src="/api/camera/stream?t=${Date.now()}" style="width:100%;height:100%;object-fit:contain;display:block;margin:0 auto;" alt="Live WebCam">
+        <div class="scanner-laser-line"></div>
+        <div class="scanner-reticle-box"></div>
+        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.75);padding:4px 10px;border-radius:6px;font-size:11px;color:#10b981;font-weight:700;display:flex;align-items:center;gap:6px;z-index:6;">
+            <span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;animation:pulseDot 1s infinite;"></span>
+            LIVE WEBCAM AKTIF
+        </div>
+        <div style="position:absolute;bottom:8px;right:8px;display:flex;gap:6px;z-index:6;">
+            <label style="background:rgba(15,23,42,0.85);color:#38bdf8;border:1px solid rgba(56,189,248,0.5);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
+                📁 Upload Foto
+                <input type="file" accept="image/*" style="display:none;" onchange="handleQRFileInput(event, '${targetInputId}', '${mode}')">
+            </label>
+        </div>
+    `;
+
+    if (status) {
+        status.innerText = '📷 WebCam Aktif — Arahkan barcode ke depan kamera...';
+    }
+
+    // Poll status from backend
+    if (_backendCamPoll) clearInterval(_backendCamPoll);
+    _backendCamPoll = setInterval(async () => {
+        try {
+            const res = await fetch('/api/camera/status');
+            const data = await res.json();
+            if (data.detected) {
+                clearInterval(_backendCamPoll);
+                _backendCamPoll = null;
+                const detectedValue = (mode === 'pk')
+                    ? (data.detected.pk || data.detected.text)
+                    : (data.detected.address || data.detected.text);
+                onCameraScanSuccess(detectedValue);
+            }
+        } catch(e){}
+    }, 200);
 }
 
 function renderScannerFallbackUI(targetInputId, mode) {
@@ -1376,7 +1485,7 @@ function closeInlineScanner() {
     if (panel) panel.style.display = 'none';
     const container = document.getElementById('inlineScannerVideo');
     if (container) container.innerHTML = '';
-    _stopNativeCamera();
+    _stopAllCameraScanners();
 }
 
 function _scanInlineLoop(timestamp) {
