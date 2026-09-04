@@ -49,6 +49,9 @@ echo [*] Menginstall dependensi dari core\requirements.txt...
 call .venv\Scripts\activate.bat
 python -m pip install --upgrade pip >nul 2>&1
 pip install -r core\requirements.txt
+if exist "core\requirements-desktop.txt" (
+    pip install -r core\requirements-desktop.txt
+)
 if errorlevel 1 (
     color 0C
     echo [-] Gagal menginstall dependensi! Periksa koneksi internet Anda.

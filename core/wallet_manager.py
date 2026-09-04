@@ -251,14 +251,22 @@ class WalletManager:
 
     def _get_w3(self, network: str = "base"):
         """Get or initialize Web3 instance for specific network with RPC fallback."""
-        from web3 import Web3
+        try:
+            from web3 import Web3
+        except ImportError:
+            return None
+
         net_key = network.lower().strip()
         if net_key not in NETWORKS:
             net_key = "base"
 
         with self._lock:
-            if net_key in self._w3_cache and self._w3_cache[net_key].is_connected():
-                return self._w3_cache[net_key]
+            if net_key in self._w3_cache:
+                try:
+                    if self._w3_cache[net_key].is_connected():
+                        return self._w3_cache[net_key]
+                except Exception:
+                    pass
 
         net_info = NETWORKS[net_key]
         for rpc in net_info["rpc_urls"]:
@@ -272,8 +280,11 @@ class WalletManager:
                 continue
 
         # If all fail, return first provider instance
-        fallback_w3 = Web3(Web3.HTTPProvider(net_info["rpc_urls"][0], request_kwargs={"timeout": 8}))
-        return fallback_w3
+        try:
+            fallback_w3 = Web3(Web3.HTTPProvider(net_info["rpc_urls"][0], request_kwargs={"timeout": 8}))
+            return fallback_w3
+        except Exception:
+            return None
 
     def connect_private_key(self, private_key: str) -> Dict[str, Any]:
         """Connect wallet using raw private key (works across all EVM networks)."""
@@ -373,38 +384,64 @@ class WalletManager:
             }
 
             # 1. Native Gas Balance (ETH on Base, BNB on BSC)
-            try:
-                native_wei = w3.eth.get_balance(w3.to_checksum_address(address))
-                net_data["native_balance"] = round(float(w3.from_wei(native_wei, "ether")), 6)
-            except Exception as e:
-                print(f"[WalletManager] Error fetching {net_info['native_symbol']} balance: {e}")
+            if w3:
+                try:
+                    native_wei = w3.eth.get_balance(w3.to_checksum_address(address))
+                    net_data["native_balance"] = round(float(w3.from_wei(native_wei, "ether")), 6)
+                except Exception as e:
+                    print(f"[WalletManager] Error fetching {net_info['native_symbol']} balance via Web3: {e}")
+            else:
+                # Direct JSON-RPC via requests fallback
+                for rpc in net_info["rpc_urls"]:
+                    try:
+                        r = requests.post(rpc, json={"jsonrpc": "2.0", "method": "eth_getBalance", "params": [address, "latest"], "id": 1}, timeout=6)
+                        if r.status_code == 200:
+                            hex_bal = r.json().get("result", "0x0")
+                            net_data["native_balance"] = round(int(hex_bal, 16) / 1e18, 6)
+                            break
+                    except Exception:
+                        continue
 
             # 2. Token Balances (USDC, USDT)
             for tok_key, tok_info in net_info["tokens"].items():
-                try:
-                    contract = w3.eth.contract(
-                        address=w3.to_checksum_address(tok_info["contract"]),
-                        abi=ERC20_ABI
-                    )
-                    raw_bal = contract.functions.balanceOf(w3.to_checksum_address(address)).call()
-                    dec = tok_info["decimals"]
-                    token_bal = round(raw_bal / (10 ** dec), 6)
-                    net_data["tokens"][tok_key] = {
-                        "symbol": tok_info["symbol"],
-                        "name": tok_info["name"],
-                        "balance": token_bal,
-                        "decimals": dec,
-                        "contract": tok_info["contract"]
-                    }
-                except Exception as e:
-                    print(f"[WalletManager] Error fetching {tok_key} on {net_key}: {e}")
-                    net_data["tokens"][tok_key] = {
-                        "symbol": tok_info["symbol"],
-                        "name": tok_info["name"],
-                        "balance": 0.0,
-                        "decimals": tok_info["decimals"],
-                        "contract": tok_info["contract"]
-                    }
+                dec = tok_info["decimals"]
+                token_bal = 0.0
+                tok_contract = tok_info["contract"]
+
+                if w3:
+                    try:
+                        contract = w3.eth.contract(
+                            address=w3.to_checksum_address(tok_contract),
+                            abi=ERC20_ABI
+                        )
+                        raw_bal = contract.functions.balanceOf(w3.to_checksum_address(address)).call()
+                        token_bal = round(raw_bal / (10 ** dec), 6)
+                    except Exception as e:
+                        print(f"[WalletManager] Error fetching {tok_key} on {net_key} via Web3: {e}")
+                else:
+                    # Direct JSON-RPC eth_call via requests
+                    try:
+                        addr_clean = address.lower().replace("0x", "").zfill(64)
+                        call_data = "0x70a08231" + addr_clean
+                        for rpc in net_info["rpc_urls"]:
+                            try:
+                                r = requests.post(rpc, json={"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": tok_contract, "data": call_data}, "latest"], "id": 1}, timeout=6)
+                                if r.status_code == 200:
+                                    hex_val = r.json().get("result", "0x0")
+                                    token_bal = round(int(hex_val, 16) / (10 ** dec), 6)
+                                    break
+                            except Exception:
+                                continue
+                    except Exception:
+                        pass
+
+                net_data["tokens"][tok_key] = {
+                    "symbol": tok_info["symbol"],
+                    "name": tok_info["name"],
+                    "balance": token_bal,
+                    "decimals": dec,
+                    "contract": tok_contract
+                }
 
             result["networks"][net_key] = net_data
 
