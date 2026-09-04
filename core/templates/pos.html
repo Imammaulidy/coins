@@ -206,14 +206,14 @@
         }
         .drawer-info-box code { color: var(--accent); font-weight: 700; }
 
-        /* WALLET HORIZONTAL FULL-WIDTH PANEL */
+        /* WALLET HORIZONTAL FULL-WIDTH PANEL (ULTRA COMPACT) */
         .wallet-horizontal-panel {
-            max-width: 1400px;
-            margin: 0 auto 20px;
+            max-width: 1440px;
+            margin: 0 auto 10px;
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 14px;
-            padding: 16px 20px;
+            border-radius: 12px;
+            padding: 10px 14px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.35);
         }
         .wallet-header {
@@ -223,13 +223,13 @@
             user-select: none;
             margin-bottom: 4px;
         }
-        .wallet-header-left { display: flex; align-items: center; gap: 10px; }
-        .wallet-icon { font-size: 20px; }
-        .wallet-title { font-size: 14px; font-weight: 700; color: #fff; }
-        .wallet-subtitle { font-size: 11px; color: var(--text-muted); }
+        .wallet-header-left { display: flex; align-items: center; gap: 8px; }
+        .wallet-icon { font-size: 18px; }
+        .wallet-title { font-size: 13px; font-weight: 700; color: #fff; }
+        .wallet-subtitle { font-size: 10.5px; color: var(--text-muted); }
         .wallet-badge-status {
-            font-size: 11px; font-weight: 700;
-            padding: 3px 10px; border-radius: 20px;
+            font-size: 10.5px; font-weight: 700;
+            padding: 2px 8px; border-radius: 20px;
             background: rgba(255,255,255,0.06);
             color: var(--text-muted);
             border: 1px solid var(--card-border);
@@ -239,44 +239,44 @@
             color: #10b981;
             border-color: rgba(16,185,129,0.3);
         }
-        .wallet-tabs { display: flex; gap: 8px; }
+        .wallet-tabs { display: flex; gap: 6px; }
         .wallet-tab {
             background: var(--card-inner); border: 1px solid var(--card-border);
-            border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600;
+            border-radius: 6px; padding: 5px 12px; font-size: 11.5px; font-weight: 600;
             color: var(--text-muted); cursor: pointer; transition: all 0.15s;
         }
         .wallet-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         .wallet-input {
             width: 100%; background: var(--card-inner);
-            border: 1px solid var(--card-border); border-radius: 9px;
-            padding: 9px 12px; color: #fff; font-size: 13px; outline: none;
+            border: 1px solid var(--card-border); border-radius: 8px;
+            padding: 7px 10px; color: #fff; font-size: 12px; outline: none;
             box-sizing: border-box;
         }
         .wallet-input:focus { border-color: var(--accent); }
         .btn-connect-wallet {
             background: linear-gradient(135deg, var(--usdc-blue), #0284c7);
-            color: #fff; border: none; border-radius: 9px;
-            padding: 9px 18px; font-size: 13px; font-weight: 700;
+            color: #fff; border: none; border-radius: 8px;
+            padding: 7px 14px; font-size: 12px; font-weight: 700;
             cursor: pointer; transition: opacity 0.15s;
         }
         .btn-connect-wallet:hover { opacity: 0.9; }
         .wallet-connect-row {
-            display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
         }
         .input-with-action {
             display: flex; gap: 6px; align-items: center;
         }
         .btn-scan-camera {
             background: linear-gradient(135deg, #0284c7, #0369a1);
-            color: #fff; border: none; border-radius: 8px;
-            padding: 8px 12px; font-size: 12px; font-weight: 700;
+            color: #fff; border: none; border-radius: 6px;
+            padding: 6px 10px; font-size: 11px; font-weight: 700;
             cursor: pointer; transition: all 0.15s; white-space: nowrap;
         }
         .btn-scan-camera:hover { opacity: 0.9; }
         .btn-paste-clip {
             background: var(--card-inner); border: 1px solid var(--card-border);
-            color: var(--text-muted); border-radius: 8px;
-            padding: 8px 12px; font-size: 12px; font-weight: 600;
+            color: var(--text-muted); border-radius: 6px;
+            padding: 6px 10px; font-size: 11px; font-weight: 600;
             cursor: pointer; transition: all 0.15s; white-space: nowrap;
         }
         .btn-paste-clip:hover { border-color: var(--accent); color: #fff; }
@@ -284,12 +284,12 @@
         /* WALLET CONNECTED VIEW */
         .wallet-connected-top-row {
             display: flex; justify-content: space-between; align-items: center;
-            flex-wrap: wrap; gap: 12px; margin-bottom: 14px; padding-bottom: 12px;
+            flex-wrap: wrap; gap: 8px; margin-bottom: 8px; padding-bottom: 8px;
             border-bottom: 1px solid rgba(255,255,255,0.06);
         }
         .net-btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
         .net-btn {
-            padding: 6px 12px; font-size: 11px; font-weight: 800; border-radius: 8px;
+            padding: 4px 10px; font-size: 10.5px; font-weight: 800; border-radius: 6px;
             cursor: pointer; border: 1.5px solid; transition: all 0.15s;
             background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: var(--text-muted);
         }
@@ -298,52 +298,52 @@
             border-color: #38bdf8 !important;
             color: #38bdf8 !important;
         }
-        .wallet-info-grid-horizontal { display: flex; gap: 10px; flex-wrap: wrap; }
+        .wallet-info-grid-horizontal { display: flex; gap: 8px; flex-wrap: wrap; }
         .wallet-info-grid-horizontal .winfo-box {
             background: var(--card-inner); border: 1px solid var(--card-border);
-            border-radius: 8px; padding: 6px 12px; min-width: 130px;
+            border-radius: 6px; padding: 4px 8px; min-width: 100px;
         }
-        .winfo-box .wlabel { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
-        .winfo-box .wval { font-size: 14px; font-weight: 800; color: #fff; margin-top: 2px; }
+        .winfo-box .wlabel { font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+        .winfo-box .wval { font-size: 12px; font-weight: 800; color: #fff; margin-top: 1px; }
         .winfo-box .wval.green { color: #10b981; }
 
         .wallet-send-stretched {
             background: var(--card-inner); border: 1px solid var(--card-border);
-            border-radius: 12px; padding: 14px 16px;
+            border-radius: 8px; padding: 8px 10px;
         }
         .send-row-inputs {
-            display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
+            display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;
         }
         
-        .send-col-addr { flex: 1.8; min-width: 260px; }
-        .send-col-amt { flex: 1.8; min-width: 260px; }
-        .send-amt-btn-combo { display: flex; gap: 8px; align-items: center; }
-        .send-amt-btn-combo .form-input { flex: 1; min-width: 0; }
-        .send-amt-btn-combo .btn-send-usdc { width: auto; flex: 0 0 auto; padding: 0 16px; height: 38px; margin: 0; white-space: nowrap; }
+        .send-col-addr { flex: 1.8; min-width: 220px; }
+        .send-col-amt { flex: 1.8; min-width: 220px; }
+        .send-amt-btn-combo { display: flex; gap: 6px; align-items: center; }
+        .send-amt-btn-combo .form-input { flex: 1; min-width: 0; height: 32px; font-size: 11.5px; padding: 4px 8px; }
+        .send-amt-btn-combo .btn-send-usdc { width: auto; flex: 0 0 auto; padding: 0 14px; height: 32px; margin: 0; white-space: nowrap; font-size: 11.5px; }
 
         .send-field-label {
-            font-size: 10px; color: var(--text-muted); font-weight: 700;
-            display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+            font-size: 9.5px; color: var(--text-muted); font-weight: 700;
+            display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px;
         }
         .send-shortcuts-inline { display: flex; gap: 4px; }
         .btn-amount-shortcut-mini {
             background: rgba(255,255,255,0.06); border: 1px solid var(--card-border);
-            border-radius: 6px; padding: 2px 6px; font-size: 10px; font-weight: 700;
+            border-radius: 4px; padding: 2px 5px; font-size: 9.5px; font-weight: 700;
             color: var(--accent); cursor: pointer; transition: all 0.15s;
         }
         .btn-amount-shortcut-mini:hover { background: rgba(56,189,248,0.2); border-color: var(--accent); }
         .btn-send-usdc {
             background: linear-gradient(135deg, #10b981, #059669);
-            color: #fff; border: none; border-radius: 9px;
-            padding: 10px 18px; font-size: 13px; font-weight: 800;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
-            transition: all 0.15s; box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+            color: #fff; border: none; border-radius: 6px;
+            padding: 6px 14px; font-size: 11.5px; font-weight: 800;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+            transition: all 0.15s; box-shadow: 0 3px 12px rgba(16,185,129,0.3);
             width: 100%;
         }
-        .btn-send-usdc:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.45); }
+        .btn-send-usdc:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(16,185,129,0.45); }
         .btn-send-usdc:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         .send-result-box {
-            display: none; border-radius: 8px; padding: 10px 12px; font-size: 12px; line-height: 1.4;
+            display: none; border-radius: 6px; padding: 6px 10px; font-size: 11px; line-height: 1.4;
         }
         .send-result-box.success {
             display: block; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10b981;
@@ -352,39 +352,41 @@
             display: block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171;
         }
 
-        /* SLOTS GRID (FULL WIDTH) */
+        /* SLOTS GRID (4 COLUMNS PER ROW IN PC DESKTOP - ULTRA COMPACT) */
         .slots-container {
-            max-width: 1400px;
+            max-width: 1440px;
             margin: 0 auto;
+            width: 100%;
         }
         .slots-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
         }
         .slot-card {
             background: var(--card-bg); border: 1px solid var(--card-border);
-            border-radius: 16px; padding: 18px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            border-radius: 12px; padding: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
             transition: transform 0.2s, border-color 0.2s;
             display: flex; flex-direction: column;
+            min-width: 0;
         }
         .slot-card:hover { transform: translateY(-2px); border-color: var(--accent); }
         .slot-header {
-            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;
         }
         .slot-badge-id {
-            font-size: 10px; font-weight: 800; color: #fff;
-            background: var(--primary); padding: 3px 8px; border-radius: 6px;
-            display: inline-block; margin-bottom: 4px; text-transform: uppercase;
+            font-size: 8.5px; font-weight: 800; color: #fff;
+            background: var(--primary); padding: 2px 6px; border-radius: 4px;
+            display: inline-block; margin-bottom: 2px; text-transform: uppercase;
         }
-        .slot-name { font-size: 15px; font-weight: 800; color: #fff; margin-top: 1px; }
-        .slot-phone { font-size: 12px; color: var(--text-muted); }
+        .slot-name { font-size: 12.5px; font-weight: 800; color: #fff; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .slot-phone { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .slot-delete-btn {
             background: rgba(255,255,255,0.05); border: 1px solid var(--card-border);
-            border-radius: 8px; width: 28px; height: 28px;
+            border-radius: 6px; width: 22px; height: 22px;
             color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-size: 14px; transition: all 0.15s;
+            font-size: 12px; transition: all 0.15s; flex-shrink: 0;
         }
         .slot-delete-btn:hover { background: rgba(239,68,68,0.15); color: var(--danger); }
 
@@ -392,21 +394,21 @@
         .slot-generator-tools {
             background: var(--card-inner);
             border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 10px 12px;
-            margin-bottom: 12px;
+            border-radius: 8px;
+            padding: 6px 8px;
+            margin-bottom: 6px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 5px;
         }
         .slot-merchant-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            gap: 6px;
         }
         .slot-merchant-name {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--accent);
             overflow: hidden;
             text-overflow: ellipsis;
@@ -418,9 +420,9 @@
             background: rgba(255,255,255,0.06);
             color: var(--accent);
             border: 1px solid var(--card-border);
-            border-radius: 6px;
-            padding: 4px 8px;
-            font-size: 11px;
+            border-radius: 5px;
+            padding: 3px 6px;
+            font-size: 10px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.15s;
@@ -432,42 +434,45 @@
         .slot-nominal-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         .slot-nominal-input-group {
             display: flex;
             align-items: center;
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 8px;
+            border-radius: 6px;
             overflow: hidden;
             flex: 1;
+            min-width: 0;
         }
         .slot-nominal-input-group span {
-            padding: 0 6px 0 10px;
+            padding: 0 4px 0 6px;
             color: var(--text-muted);
             font-weight: 700;
-            font-size: 12px;
+            font-size: 11px;
         }
         .slot-nominal-input {
             background: transparent;
             border: none;
             outline: none;
             color: #fff;
-            font-size: 13px;
+            font-size: 11.5px;
             font-weight: 700;
             width: 100%;
-            min-width: 50px;
-            padding: 6px 4px;
+            min-width: 40px;
+            padding: 4px 2px;
+            height: 25px;
         }
         .btn-slot-set {
             background: var(--card-border);
             color: #fff;
             border: none;
-            padding: 6px 10px;
-            font-size: 11px;
+            padding: 4px 7px;
+            font-size: 10px;
             font-weight: 700;
             cursor: pointer;
+            height: 25px;
             transition: background 0.15s;
         }
         .btn-slot-set:hover { background: var(--accent); color: #000; }
@@ -475,30 +480,31 @@
             background: linear-gradient(135deg, #0052ff, #0284c7);
             color: #fff;
             border: none;
-            border-radius: 8px;
-            padding: 6px 10px;
-            font-size: 11.5px;
+            border-radius: 6px;
+            padding: 4px 7px;
+            font-size: 10.5px;
             font-weight: 800;
             cursor: pointer;
             white-space: nowrap;
+            height: 25px;
             transition: all 0.15s;
-            box-shadow: 0 2px 8px rgba(0,82,255,0.3);
+            box-shadow: 0 2px 6px rgba(0,82,255,0.3);
             flex-shrink: 0;
         }
-        .btn-slot-increment:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,82,255,0.5); }
+        .btn-slot-increment:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,82,255,0.5); }
 
         .slot-auto-random-row {
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            padding-top: 5px;
+            padding-top: 3px;
             border-top: 1px dashed rgba(255,255,255,0.08);
         }
         .slot-auto-random-label {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            font-size: 11px;
+            gap: 4px;
+            font-size: 9px;
             font-weight: 600;
             color: var(--text-muted);
             cursor: pointer;
@@ -508,35 +514,28 @@
         .slot-auto-random-label input {
             accent-color: var(--accent);
             cursor: pointer;
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             margin: 0;
         }
 
         /* QR CODE BOX */
         .qr-card-box {
-            background: #fff; border-radius: 12px; padding: 12px;
+            background: #fff; border-radius: 8px; padding: 6px;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; margin-bottom: 12px;
+            cursor: pointer; margin-bottom: 6px;
             transition: transform 0.15s;
         }
         .qr-card-box:hover { transform: scale(1.02); }
-        .qr-card-box img { width: 100%; max-width: 220px; height: auto; display: block; }
+        .qr-card-box img { width: 100%; max-width: 125px; height: auto; aspect-ratio: 1/1; display: block; margin: 0 auto; }
         
         .usdc-calc-box {
             background: var(--card-inner); border: 1px solid var(--card-border);
-            border-radius: 10px; padding: 8px 10px; text-align: center; margin-bottom: 12px;
+            border-radius: 6px; padding: 4px 6px; text-align: center; margin-bottom: 0;
         }
-        .usdc-calc-title { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
-        .usdc-amount-highlight { font-size: 18px; font-weight: 800; color: #10b981; }
-        .usdc-rate-note { font-size: 10px; color: #64748b; margin-top: 2px; }
-        .slot-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
-        .btn-card-action {
-            background: var(--card-inner); border: 1px solid var(--card-border);
-            border-radius: 8px; padding: 7px 4px; color: var(--text-muted);
-            font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; text-align: center;
-        }
-        .btn-card-action:hover { border-color: var(--accent); color: #fff; background: rgba(56,189,248,0.1); }
+        .usdc-calc-title { font-size: 8px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 1px; }
+        .usdc-amount-highlight { font-size: 12.5px; font-weight: 800; color: #10b981; }
+        .usdc-rate-note { font-size: 8px; color: #64748b; margin-top: 1px; }
 
         /* EMPTY STATE */
         .empty-state-box {
@@ -703,137 +702,156 @@
                 border-radius: 8px;
             }
 
-            /* 2-COLUMN SLOTS GRID: SLOT 1 & SLOT 2 FIT SIDE-BY-SIDE ON MOBILE */
+            /* 2-COLUMN SLOTS GRID: SLOT 1 & 2 (ROW 1), SLOT 3 & 4 (ROW 2) - ULTRA COMPACT HEIGHT */
             .slots-grid {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 6px;
+                gap: 5px;
             }
             .slot-card {
-                padding: 8px 6px;
-                border-radius: 10px;
+                padding: 5px 4px;
+                border-radius: 8px;
                 min-width: 0;
             }
             .slot-header {
                 position: relative;
-                padding-right: 20px;
-                margin-bottom: 4px;
+                padding-right: 18px;
+                margin-bottom: 2px;
             }
-            .slot-header .btn-delete-slot {
+            .slot-header .slot-delete-btn {
                 position: absolute;
                 top: 0;
                 right: 0;
-                width: 18px;
-                height: 18px;
-                font-size: 10px;
+                width: 16px;
+                height: 16px;
+                font-size: 9px;
                 line-height: 1;
+                padding: 0;
+                border-radius: 4px;
             }
-            .slot-badge {
-                font-size: 8px;
+            .slot-badge-id {
+                font-size: 7px;
                 padding: 1px 4px;
+                margin-bottom: 1px;
+                border-radius: 3px;
             }
             .slot-name {
-                font-size: 10.5px;
+                font-size: 9.5px;
                 font-weight: 800;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                margin-top: 2px;
+                margin-top: 1px;
             }
             .slot-phone {
-                font-size: 8.5px;
+                font-size: 7.5px;
             }
-            .merchant-name-bar {
+            .slot-generator-tools {
+                background: var(--card-inner);
+                border: 1px solid var(--card-border);
                 padding: 3px 4px;
-                font-size: 8.5px;
-                margin-bottom: 4px;
+                gap: 2px;
+                margin-bottom: 3px;
+                border-radius: 5px;
+            }
+            .slot-merchant-row {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 gap: 2px;
-                border-radius: 6px;
             }
-            .merchant-name-bar .mname-text {
-                font-size: 8px;
+            .slot-merchant-name {
+                font-size: 7.5px;
                 max-width: 70px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
-            .btn-random-name-inline {
-                padding: 2px 4px;
-                font-size: 8px;
+            .btn-slot-random-name {
+                padding: 1px 3px;
+                font-size: 7.5px;
                 white-space: nowrap;
+                border-radius: 4px;
             }
-            .slot-tools-row {
+            .slot-nominal-row {
                 display: flex;
-                gap: 3px;
-                margin-bottom: 4px;
+                align-items: center;
+                gap: 2px;
             }
-            .slot-nominal-input {
-                font-size: 10px;
-                padding: 2px 4px;
-                height: 25px;
+            .slot-nominal-input-group {
+                display: flex;
+                align-items: center;
+                border-radius: 4px;
+                overflow: hidden;
                 flex: 1;
                 min-width: 0;
             }
-            .btn-slot-set {
-                padding: 2px 5px;
-                font-size: 9px;
-                height: 25px;
-            }
-            .btn-lightning-inc {
-                padding: 2px 4px;
-                font-size: 9px;
-                height: 25px;
-                white-space: nowrap;
-            }
-            .auto-random-slot-row {
+            .slot-nominal-input-group span {
+                padding: 0 2px 0 3px;
                 font-size: 8px;
-                margin-bottom: 4px;
             }
-            .auto-random-slot-row input {
-                width: 11px;
-                height: 11px;
+            .slot-nominal-input {
+                font-size: 9px;
+                padding: 1px 2px;
+                height: 20px;
+                min-width: 25px;
+            }
+            .btn-slot-set {
+                padding: 1px 4px;
+                font-size: 8px;
+                height: 20px;
+            }
+            .btn-slot-increment {
+                padding: 1px 4px;
+                font-size: 8px;
+                height: 20px;
+                white-space: nowrap;
+                border-radius: 4px;
+            }
+            .slot-auto-random-row {
+                display: flex;
+                align-items: center;
+                padding-top: 1px;
+            }
+            .slot-auto-random-label {
+                display: inline-flex;
+                align-items: center;
+                font-size: 7px;
+                gap: 2px;
+            }
+            .slot-auto-random-label input {
+                width: 9px;
+                height: 9px;
             }
             .qr-card-box {
-                padding: 4px;
-                border-radius: 6px;
+                padding: 3px;
+                margin-bottom: 2px;
+                border-radius: 5px;
             }
             .qr-card-box img {
                 width: 100%;
-                max-width: 135px;
+                max-width: 90px;
                 height: auto;
                 aspect-ratio: 1/1;
                 display: block;
                 margin: 0 auto;
             }
             .usdc-calc-box {
-                padding: 4px;
-                margin-top: 4px;
-                border-radius: 6px;
+                padding: 2px 3px;
+                margin-bottom: 0;
+                border-radius: 4px;
             }
             .usdc-calc-title {
-                font-size: 7.5px;
-                margin-bottom: 1px;
+                font-size: 6.5px;
+                margin-bottom: 0;
             }
-            .usdc-calc-amount {
-                font-size: 10px;
+            .usdc-amount-highlight {
+                font-size: 9px;
                 font-weight: 800;
             }
-            .usdc-calc-rate {
-                font-size: 7px;
-            }
-            .slot-card-actions {
-                display: flex;
-                gap: 3px;
-                margin-top: 4px;
-            }
-            .slot-card-actions button {
-                flex: 1;
-                padding: 4px 2px;
-                font-size: 8px;
-                border-radius: 5px;
+            .usdc-rate-note {
+                font-size: 6.5px;
+                margin-top: 0;
             }
         }
 
@@ -1159,11 +1177,6 @@
                     <div class="usdc-rate-note" id="usdcRateNote_{{ acc.id }}">Memuat kurs...</div>
                 </div>
 
-                <!-- AKSI SLOT -->
-                <div class="slot-actions">
-                    <button type="button" class="btn-card-action" onclick="copySlotPayload('{{ acc.id }}')">📋 Salin Payload</button>
-                    <button type="button" class="btn-card-action" onclick="openCheckout('{{ acc.id }}')">🔗 Buat Invoice</button>
-                </div>
             </div>
 {% endfor %}
         {% else %}
@@ -2294,25 +2307,6 @@ async function deleteSlot(slotId) {
     } catch(err) {
         alert('Terjadi kesalahan jaringan: ' + err.message);
     }
-}
-
-async function copySlotPayload(slotId) {
-    const amt = getSlotNominal(slotId);
-    const name = slotNames[slotId] || '';
-    try {
-        const res = await fetch(`/api/qr/raw?amount=${amt}&account_id=${slotId}&merchant_name=${encodeURIComponent(name)}`);
-        const payload = await res.text();
-        await navigator.clipboard.writeText(payload);
-        alert(`✅ EMVCo QR Ph Payload berhasil disalin!\nNominal: ₱${amt.toFixed(2)}\nNama: ${name || 'Default'}`);
-    } catch(err) {
-        alert('Gagal menyalin payload: ' + err.message);
-    }
-}
-
-function openCheckout(slotId) {
-    const amt = getSlotNominal(slotId);
-    const name = slotNames[slotId] || '';
-    window.open(`/checkout?amount=${amt}&account_id=${slotId}&merchant_name=${encodeURIComponent(name)}`, '_blank');
 }
 
 // ============================================================
