@@ -1,4 +1,4 @@
-﻿# 🇵🇭 Coins.ph Dynamic QR Ph Payment Gateway, Web3 Hub & Telegram Bot
+# 🇵🇭 Coins.ph Dynamic QR Ph Payment Gateway, Web3 Hub & Telegram Bot
 
 Payment Gateway mandiri, POS Kasir Web resmi berstandar nasional Filipina (**QR Ph / InstaPay**), dan **Bot Telegram Otomatisasi Multi-Role** dengan generator in-slot, auto-random merchant name engine, kalkulator kurs Bitget P2P, Web3 Multi-Network Wallet Transfer (Base USDC, BSC USDT, dan BSC USDC), Cloudflare Tunnel (`triomerak.web.id`), serta arsitektur **All-in-One PM2 Process Manager** yang aktif 24 jam non-stop bahkan saat monitor/layar mati.
 
@@ -97,9 +97,6 @@ COINS_PAYMENT_GATEWAY/
 │   ├── test_system.py           # 🧪 Automated Test Suite Regresi Sistem Web
 │   ├── static/                  # 🎨 Aset Web Frontend (JS, CSS)
 │   └── templates/               # 🖥️ Template HTML (POS Kasir, Dashboard, Checkout)
-│
-├── docs/                        # 📚 Dokumentasi Proyek
-│   └── README.md                # 📄 Salinan Dokumentasi
 │
 └── TERMUX/                      # 📁 Script Khusus Android Termux
     ├── run.sh                   # 🌐 Launcher POS Server Termux
