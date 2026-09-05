@@ -161,9 +161,12 @@ show_menu() {
     echo -e "  ${MAGENTA}[10]${NC} ${BOLD}Setup Lengkap Dependensi Termux${NC}"
     echo -e "       Install Python, NodeJS, PM2, build tools, & cloudflared ARM64"
     echo ""
+    echo -e "  ${CYAN}[11]${NC} ${BOLD}Impor / Pulihkan Data dari PC (users, kode akses, database)${NC}"
+    echo -e "       Salin data users.json, access_codes.json, payments.db dari Download HP"
+    echo ""
     echo -e "  ${RED}[0]${NC} Keluar"
     echo ""
-    echo -ne "Pilihan Anda [0-10]: "
+    echo -ne "Pilihan Anda [0-11]: "
 }
 
 ensure_config() {
@@ -738,6 +741,91 @@ install_all_deps() {
     read -p "Tekan Enter untuk kembali ke menu..."
 }
 
+import_pc_data() {
+    echo ""
+    echo -e "${CYAN}${BOLD}=== IMPOR / SINKRONISASI DATA DARI PC KE TERMUX ===${NC}"
+    echo ""
+    echo -e "${YELLOW}[*] Memeriksa ketersediaan file data backup di folder Download HP...${NC}"
+    
+    # 1. Deteksi path sumber
+    SRC=""
+    if [ -f "/sdcard/Download/coins_sync/users.json" ]; then
+        SRC="/sdcard/Download/coins_sync"
+    elif [ -f "$HOME/storage/downloads/coins_sync/users.json" ]; then
+        SRC="$HOME/storage/downloads/coins_sync"
+    elif [ -f "/sdcard/Download/users.json" ]; then
+        SRC="/sdcard/Download"
+    elif [ -f "$HOME/storage/downloads/users.json" ]; then
+        SRC="$HOME/storage/downloads"
+    fi
+
+    # Jika belum ada izin storage, panggil setup storage
+    if [ -z "$SRC" ] && [ ! -d "$HOME/storage" ]; then
+        echo -e "${YELLOW}[*] Menyiapkan izin akses file internal Termux...${NC}"
+        termux-setup-storage 2>/dev/null
+        sleep 2
+        # Cek ulang
+        if [ -f "/sdcard/Download/coins_sync/users.json" ]; then
+            SRC="/sdcard/Download/coins_sync"
+        elif [ -f "$HOME/storage/downloads/coins_sync/users.json" ]; then
+            SRC="$HOME/storage/downloads/coins_sync"
+        elif [ -f "/sdcard/Download/users.json" ]; then
+            SRC="/sdcard/Download"
+        elif [ -f "$HOME/storage/downloads/users.json" ]; then
+            SRC="$HOME/storage/downloads"
+        fi
+    fi
+
+    if [ -n "$SRC" ]; then
+        echo -e "${GREEN}[+] Lokasi file backup terdeteksi: $SRC${NC}"
+        echo ""
+        COUNT=0
+        if [ -f "$SRC/users.json" ]; then
+            cp "$SRC/users.json" "$PROJECT_ROOT/core/users.json"
+            echo -e "  ${GREEN}✓${NC} users.json (Akun Pengguna & Client) dipulihkan"
+            COUNT=$((COUNT+1))
+        fi
+        if [ -f "$SRC/access_codes.json" ]; then
+            cp "$SRC/access_codes.json" "$PROJECT_ROOT/core/access_codes.json"
+            echo -e "  ${GREEN}✓${NC} access_codes.json (Voucher Kode Akses) dipulihkan"
+            COUNT=$((COUNT+1))
+        fi
+        if [ -f "$SRC/payments.db" ]; then
+            cp "$SRC/payments.db" "$PROJECT_ROOT/core/payments.db"
+            echo -e "  ${GREEN}✓${NC} payments.db (Database Riwayat Transaksi) dipulihkan"
+            COUNT=$((COUNT+1))
+        fi
+        if [ -f "$SRC/config.json" ]; then
+            cp "$SRC/config.json" "$PROJECT_ROOT/core/config.json"
+            echo -e "  ${GREEN}✓${NC} config.json (Konfigurasi Bot Telegram & Bank) dipulihkan"
+            COUNT=$((COUNT+1))
+        fi
+
+        if [ $COUNT -gt 0 ]; then
+            echo ""
+            echo -e "${GREEN}[*] Merestart layanan PM2 agar data langsung aktif di website...${NC}"
+            if command -v pm2 >/dev/null 2>&1; then
+                pm2 restart all >/dev/null 2>&1
+            fi
+            echo ""
+            echo -e "${GREEN}${BOLD}[+] SUKSES! $COUNT file data berhasil dipulihkan ke Termux!${NC}"
+            echo -e "    Silakan refresh website: https://triomerak.web.id/pos"
+        else
+            echo -e "${RED}[-] Tidak ada file data yang dapat disalin.${NC}"
+        fi
+    else
+        echo -e "${RED}[-] File data belum ditemukan di folder Download HP.${NC}"
+        echo ""
+        echo "Langkah persiapan di PC:"
+        echo "1. Hubungkan HP ke PC via kabel USB."
+        echo "2. Jalankan skrip 'SINKRON_DATA_KE_HP.bat' di folder PC."
+        echo "   (Atau copy manual 4 file dari folder 'core' PC ke folder 'Download' HP)"
+        echo "3. Setelah itu, pilih kembali menu [11] ini di Termux."
+    fi
+    echo ""
+    read -p "Tekan Enter untuk kembali ke menu..."
+}
+
 # Main Loop
 while true; do
     show_menu
@@ -764,6 +852,7 @@ while true; do
             fi
             ;;
         10) install_all_deps ;;
+        11) import_pc_data ;;
         0)
             echo ""
             echo -e "${GREEN}Terima kasih telah menggunakan Coins.ph Gateway. Sampai jumpa!${NC}"
