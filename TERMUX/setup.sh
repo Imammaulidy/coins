@@ -262,10 +262,10 @@ start_all_in_one() {
         if [ -n "$CF_BIN" ]; then
             if [ -f "$PROJECT_ROOT/cloudflare_token.txt" ]; then
                 CF_TOKEN=$(cat "$PROJECT_ROOT/cloudflare_token.txt" | tr -d '[:space:]')
-                nohup "$CF_BIN" tunnel run --token "$CF_TOKEN" > tunnel.log 2>&1 &
+                nohup "$CF_BIN" tunnel run --url "http://127.0.0.1:5000" --token "$CF_TOKEN" > tunnel.log 2>&1 &
                 echo $! > "$PROJECT_ROOT/.tunnel.pid"
             else
-                nohup "$CF_BIN" tunnel run --url "http://${LOCAL_IP}:5000" triomerak > tunnel.log 2>&1 &
+                nohup "$CF_BIN" tunnel run --url "http://127.0.0.1:5000" triomerak > tunnel.log 2>&1 &
                 echo $! > "$PROJECT_ROOT/.tunnel.pid"
             fi
         fi
@@ -354,10 +354,10 @@ start_tunnel() {
             else
                 if [ -f "$PROJECT_ROOT/cloudflare_token.txt" ]; then
                     CF_TOKEN=$(cat "$PROJECT_ROOT/cloudflare_token.txt" | tr -d '[:space:]')
-                    nohup "$CF_BIN" tunnel run --token "$CF_TOKEN" > tunnel.log 2>&1 &
+                    nohup "$CF_BIN" tunnel run --url "http://127.0.0.1:5000" --token "$CF_TOKEN" > tunnel.log 2>&1 &
                     echo $! > "$PROJECT_ROOT/.tunnel.pid"
                 else
-                    nohup "$CF_BIN" tunnel run --url "http://${LOCAL_IP}:5000" triomerak > tunnel.log 2>&1 &
+                    nohup "$CF_BIN" tunnel run --url "http://127.0.0.1:5000" triomerak > tunnel.log 2>&1 &
                     echo $! > "$PROJECT_ROOT/.tunnel.pid"
                 fi
                 echo -e "${GREEN}[+] Tunnel aktif di background (PID: $(cat .tunnel.pid))${NC}"
@@ -371,9 +371,9 @@ start_tunnel() {
             echo ""
             if [ -f "$PROJECT_ROOT/cloudflare_token.txt" ]; then
                 CF_TOKEN=$(cat "$PROJECT_ROOT/cloudflare_token.txt" | tr -d '[:space:]')
-                "$CF_BIN" tunnel run --token "$CF_TOKEN"
+                "$CF_BIN" tunnel run --url "http://127.0.0.1:5000" --token "$CF_TOKEN"
             elif [ -f "$HOME/.cloudflared/cert.pem" ]; then
-                "$CF_BIN" tunnel run --url "http://${LOCAL_IP}:5000" triomerak
+                "$CF_BIN" tunnel run --url "http://127.0.0.1:5000" triomerak
             else
                 echo -e "${YELLOW}[!] Belum ada token tersimpan.${NC}"
                 echo "Silakan input token melalui Menu [7] terlebih dahulu."
@@ -385,7 +385,7 @@ start_tunnel() {
             echo -e "${CYAN}[*] Menghubungkan ke Cloudflare Quick Tunnel (*.trycloudflare.com)...${NC}"
             echo -e "${YELLOW}[INFO] URL publik acak akan muncul di bawah. Tekan CTRL+C untuk berhenti.${NC}"
             echo ""
-            "$CF_BIN" tunnel --url "http://${LOCAL_IP}:5000"
+            "$CF_BIN" tunnel --url "http://127.0.0.1:5000"
             ;;
         *) return ;;
     esac

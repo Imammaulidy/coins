@@ -67,7 +67,7 @@ let hasToken = false;
 if (fs.existsSync(tokenFile)) {
   const token = fs.readFileSync(tokenFile, 'utf8').trim();
   if (token) {
-    tunnelArgs = `tunnel run --token ${token}`;
+    tunnelArgs = `tunnel run --url http://127.0.0.1:5000 --token ${token}`;
     hasToken = true;
   }
 }
