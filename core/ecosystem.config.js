@@ -19,7 +19,12 @@ function getLocalIp() {
 
 const localIp = getLocalIp();
 const rootDir = path.resolve(__dirname, '..');
-const pythonPath = path.resolve(rootDir, '.venv', 'Scripts', 'python.exe');
+
+// Gunakan pythonw.exe agar murni berjalan di latar belakang tanpa memunculkan jendela console/terminal hitam kosong
+const pythonwPath = path.resolve(rootDir, '.venv', 'Scripts', 'pythonw.exe');
+const pythonExePath = path.resolve(rootDir, '.venv', 'Scripts', 'python.exe');
+const pythonPath = fs.existsSync(pythonwPath) ? pythonwPath : pythonExePath;
+
 const cloudflaredPath = path.resolve(__dirname, 'bin', 'cloudflared.exe');
 
 // Tentukan argumen tunnel
@@ -39,6 +44,7 @@ module.exports = {
       script: 'api_server.py',
       cwd: __dirname,
       interpreter: pythonPath,
+      windowsHide: true,
       autorestart: true,
       watch: false,
       max_memory_restart: '500M',
@@ -52,6 +58,7 @@ module.exports = {
       script: 'bot.py',
       cwd: __dirname,
       interpreter: pythonPath,
+      windowsHide: true,
       autorestart: true,
       watch: false,
       max_memory_restart: '500M',
@@ -65,6 +72,7 @@ module.exports = {
       args: tunnelArgs,
       cwd: __dirname,
       interpreter: 'none',
+      windowsHide: true,
       autorestart: true,
       watch: false
     }

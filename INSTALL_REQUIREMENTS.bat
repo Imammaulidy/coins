@@ -32,9 +32,9 @@ goto INSTALL_PACKAGES
 echo.
 echo [2/2] Sedang menginstall modul requirement...
 .venv\Scripts\python.exe -m pip install --upgrade pip
-.venv\Scripts\pip.exe install -r core\requirements.txt
+.venv\Scripts\python.exe -m pip install -r core\requirements.txt
 if exist "core\requirements-desktop.txt" (
-    .venv\Scripts\pip.exe install -r core\requirements-desktop.txt
+    .venv\Scripts\python.exe -m pip install -r core\requirements-desktop.txt
 )
 if errorlevel 1 goto ERROR_PIP
 
