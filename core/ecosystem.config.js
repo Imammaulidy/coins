@@ -60,8 +60,8 @@ if (isWin) {
   }
 }
 
-// Tentukan argumen tunnel
-let tunnelArgs = `tunnel run --url http://${localIp}:5000 triomerak`;
+// Tentukan argumen tunnel: gunakan loopback 127.0.0.1 agar kebal terhadap perubahan IP dinamis/mode pesawat
+let tunnelArgs = `tunnel run --url http://127.0.0.1:5000 triomerak`;
 const tokenFile = path.resolve(rootDir, 'cloudflare_token.txt');
 let hasToken = false;
 if (fs.existsSync(tokenFile)) {

@@ -13,7 +13,7 @@ if "%LOCAL_IP%"=="" (
 )
 if "%LOCAL_IP%"=="" set LOCAL_IP=192.168.1.20
 
-set TARGET_LOCAL_URL=http://%LOCAL_IP%:5000
+set TARGET_LOCAL_URL=http://127.0.0.1:5000
 
 :: 2. Deteksi cloudflared.exe
 set CF_BIN=core\bin\cloudflared.exe

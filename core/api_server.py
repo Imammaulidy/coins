@@ -1242,20 +1242,26 @@ if __name__ == "__main__":
     port = int(cfg.get("server", {}).get("port", 5000))
     local_ip = get_local_ip()
 
-    # Backend berjalan eksklusif pada IP:PORT dinamis LAN
+    # Binding murni ke 0.0.0.0 (INADDR_ANY) agar server mendengarkan di SEMUA antarmuka IP:
+    # 1. 127.0.0.1 (Loopback lokal - stabil tanpa pernah putus)
+    # 2. IP Seluler Dinamis (Otomatis menyesuaikan saat ganti IP / mode pesawat tanpa restart)
+    # 3. IP LAN / Wi-Fi / Hotspot
     cfg_host = cfg.get("server", {}).get("host")
-    if cfg_host and cfg_host not in ["0.0.0.0", "auto", ""]:
+    if cfg_host and cfg_host not in ["auto", ""]:
         host = cfg_host
     else:
-        host = local_ip
+        host = "0.0.0.0"
 
     print("=====================================================")
     print(f"[*] Coins.ph Multi-Account QR Ph Gateway")
-    print(f"[*] Server Binding Host: {host}:{port}")
-    print(f"[*] POS Kasir URL:     http://{host}:{port}/pos")
-    print(f"[*] Dashboard URL:     http://{host}:{port}/dashboard")
-    print(f"[*] REST API Endpoint: http://{host}:{port}/api/payment/create")
-    print(f"[*] Live Rate Engine:  http://{host}:{port}/api/rate")
-    print(f"[*] Wallet API:        http://{host}:{port}/api/wallet/status")
+    print(f"[*] Server Binding Host: {host}:{port} (Mendengarkan di SEMUA IP)")
+    print(f"[*] Localhost URL:     http://127.0.0.1:{port}/pos")
+    if local_ip and local_ip not in ["0.0.0.0", "127.0.0.1"]:
+        print(f"[*] Dynamic IP LAN/HP: http://{local_ip}:{port}/pos")
+    print(f"[*] Public Domain URL: https://triomerak.web.id/pos")
+    print(f"[*] Dashboard URL:     http://127.0.0.1:{port}/dashboard")
+    print(f"[*] REST API Endpoint: http://127.0.0.1:{port}/api/payment/create")
+    print(f"[*] Live Rate Engine:  http://127.0.0.1:{port}/api/rate")
+    print(f"[*] Wallet API:        http://127.0.0.1:{port}/api/wallet/status")
     print("=====================================================")
     app.run(host=host, port=port, debug=False)
