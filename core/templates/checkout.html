@@ -243,11 +243,11 @@
         <div class="beneficiary-info">
             <div>
                 <div style="font-size: 11px; color: var(--muted);">PENERIMA PEMBAYARAN</div>
-                <div class="name">{{ config.account.name }}</div>
+                <div class="name">{{ order.account_name or account.name or account.display_name or 'MERCHANT QR PH' }}</div>
             </div>
             <div style="text-align: right;">
-                <div class="bank">{{ config.account.bank_name }}</div>
-                <div style="font-size: 11px; color: var(--muted);">{{ config.account.phone_masked }}</div>
+                <div class="bank">{{ account.bank_name or 'Coins.ph QR Ph' }}</div>
+                <div style="font-size: 11px; color: var(--muted);">{{ account.phone_masked or 'InstaPay Network' }}</div>
             </div>
         </div>
 

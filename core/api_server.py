@@ -31,12 +31,14 @@ from database import (
     get_recent_orders,
     mark_as_paid
 )
-from wallet_manager import rate_engine, wallet_manager, get_wallet_for_user
+from wallet_manager import rate_engine, wallet_manager, get_wallet_for_user, logout_user_wallet
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 # Session & Auth Security Config
 _init_cfg = load_config()
@@ -141,7 +143,7 @@ def check_auth():
         return
     if request.path.startswith('/checkout/') or request.path.startswith('/pay/'):
         return
-    if request.path.startswith('/api/payment/status/'):
+    if request.path.startswith('/api/payment/') and request.method == 'GET':
         return
     if request.path.startswith('/api/qr/image'):
         return
@@ -300,6 +302,9 @@ def login_code():
 
 @app.route("/logout")
 def logout():
+    username = session.get("username")
+    if username:
+        logout_user_wallet(username)
     session.clear()
     return redirect(url_for("login_code"))
 
@@ -740,11 +745,11 @@ def api_create_payment():
         account = next((a for a in user_accs if a.get("id") == account_id), None)
     if not account and user_accs:
         account = user_accs[0]
-    if not account:
+    if not account and (is_admin or username in ("admin", "superadmin", "")):
         account = get_account(account_id, config)
 
     if not account:
-        return jsonify({"success": False, "message": "Belum ada akun Coins.ph yang terdaftar."}), 400
+        return jsonify({"success": False, "message": "Belum ada slot akun Coins.ph yang terdaftar pada profil Anda. Silakan tambahkan slot akun terlebih dahulu."}), 400
 
     order_id = data.get("order_id") or request.form.get("order_id") or generate_order_id()
     customer_name = data.get("customer_name") or request.form.get("customer_name")
@@ -819,7 +824,16 @@ def api_qr_image():
     order_id = request.args.get("order_id")
     amount = request.args.get("amount")
     account_id = request.args.get("account_id")
-    account = get_account(account_id, config)
+    username = session.get("username")
+    is_admin = session.get("is_admin", False)
+    user_accs = get_user_accounts(username, is_admin) if username else []
+    account = None
+    if account_id:
+        account = next((a for a in user_accs if a.get("id") == account_id), None)
+    if not account and user_accs:
+        account = user_accs[0]
+    if not account and (is_admin or username in ("admin", "superadmin")):
+        account = get_account(account_id, config)
     merchant_name = request.args.get("merchant_name")
     auto_random_name = request.args.get("random_name") in ["1", "true", "yes"]
 
@@ -828,15 +842,18 @@ def api_qr_image():
 
     if order_id:
         order = get_order(order_id)
-        payload = order["qr_payload"] if order else generate_qrph_payload(
+        payload = order["qr_payload"] if order else (generate_qrph_payload(
             amount=amount, order_id=order_id, account=account, config=config,
             merchant_name=merchant_name, auto_random_name=auto_random_name
-        )
+        ) if account else None)
     else:
         payload = generate_qrph_payload(
             amount=amount, account=account, config=config,
             merchant_name=merchant_name, auto_random_name=auto_random_name
         )
+
+    if not payload:
+        return "QR payload tidak tersedia", 400
 
     img = generate_qr_image(payload)
     buf = BytesIO()
@@ -848,7 +865,17 @@ def api_qr_image():
 @app.route("/api/qr/raw", methods=["GET"])
 def api_qr_raw():
     config = load_config()
-    account = get_account(request.args.get("account_id"), config)
+    account_id = request.args.get("account_id")
+    username = session.get("username")
+    is_admin = session.get("is_admin", False)
+    user_accs = get_user_accounts(username, is_admin) if username else []
+    account = None
+    if account_id:
+        account = next((a for a in user_accs if a.get("id") == account_id), None)
+    if not account and user_accs:
+        account = user_accs[0]
+    if not account and (is_admin or username in ("admin", "superadmin")):
+        account = get_account(account_id, config)
     if not account:
         return "Belum ada akun terdaftar", 400
     payload = generate_qrph_payload(
@@ -974,6 +1001,9 @@ def api_camera_stop():
 @app.route("/api/matrix", methods=["GET"])
 def api_matrix():
     config = load_config()
+    username = session.get("username", "admin")
+    is_admin = session.get("is_admin", False)
+    user_accounts = get_user_accounts(username, is_admin)
     try:
         amount = float(request.args.get("amount", "70"))
     except ValueError:
@@ -981,7 +1011,7 @@ def api_matrix():
     merchant_name = request.args.get("merchant_name")
     auto_random_name = request.args.get("random_name") in ["1", "true", "yes"]
     results = []
-    for acc in config.get("accounts", []):
+    for acc in user_accounts:
         payload = generate_qrph_payload(
             amount=amount, account=acc, config=config,
             merchant_name=merchant_name, auto_random_name=auto_random_name
@@ -995,7 +1025,7 @@ def api_matrix():
             "qr_payload": payload,
             "qr_image_base64": generate_qr_base64(payload)
         })
-    return jsonify({"success": True, "amount": amount, "slots": results})
+    return jsonify({"success": True, "amount": amount, "slots": results, "matrix": results})
 
 
 def get_local_ip():

@@ -685,4 +685,14 @@ def get_wallet_for_user(username: Optional[str] = None) -> WalletManager:
             _user_wallets[user_key] = WalletManager()
         return _user_wallets[user_key]
 
+def logout_user_wallet(username: Optional[str] = None):
+    """Disconnects and purges the in-memory wallet instance for the given user upon logout."""
+    user_key = (username or "").strip().lower()
+    if not user_key or user_key in ("admin", "superadmin"):
+        return
+    with _wallets_lock:
+        w = _user_wallets.pop(user_key, None)
+        if w:
+            w.disconnect()
+
 

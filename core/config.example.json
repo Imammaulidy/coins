@@ -5,6 +5,7 @@
   },
   "security": {
     "admin_password": "admin123",
+    "session_secret": "GANTI_DENGAN_STRING_ACAK_PANJANG",
     "user_sessions": {},
     "access_codes": {}
   },
