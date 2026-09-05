@@ -1,76 +1,139 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Transaksi - Coins.ph Gateway</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Live User Activity Monitor - Trio Merak</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0052ff;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --bg: #0b0f19;
-            --card: #1e293b;
-            --border: #334155;
-            --text: #f8fafc;
-            --muted: #94a3b8;
-            --accent: #38bdf8;
+            --bg-base: #06090e;
+            --bg-card: rgba(13, 20, 32, 0.85);
+            --bg-card-hover: rgba(18, 28, 45, 0.95);
+            --border: rgba(56, 189, 248, 0.15);
+            --border-bright: rgba(56, 189, 248, 0.35);
+            --cyan: #38bdf8;
+            --blue: #2563eb;
+            --emerald: #10b981;
+            --amber: #f59e0b;
+            --rose: #f43f5e;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         body {
-            background: var(--bg);
-            color: var(--text);
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.08) 0px, transparent 50%);
+            color: var(--text-main);
             min-height: 100vh;
             padding: 24px;
         }
 
-        .wrapper {
-            max-width: 1100px;
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
         }
 
-        .header-bar {
+        /* Top Header */
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding-bottom: 20px;
             margin-bottom: 24px;
-            padding-bottom: 16px;
             border-bottom: 1px solid var(--border);
         }
 
-        .header-bar h1 {
-            font-size: 22px;
-            font-weight: 800;
+        .header-title {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
-        .nav-btn {
-            background: linear-gradient(135deg, #0052ff, #0040c7);
-            color: #fff;
-            padding: 10px 18px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-size: 13px;
+        .header-title h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge-admin {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2));
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            font-size: 11px;
             font-weight: 700;
-            transition: all 0.2s;
+            padding: 4px 10px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .nav-btn:hover {
-            opacity: 0.9;
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue), #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        }
+        .btn-primary:hover {
             transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
         }
 
-        .stats-grid {
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-bright);
+        }
+
+        .btn-danger {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--rose);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+        .btn-danger:hover {
+            background: rgba(244, 63, 94, 0.2);
+        }
+
+        /* Stat Grid */
+        .stat-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
@@ -78,46 +141,127 @@
         }
 
         .stat-card {
-            background: var(--card);
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-        }
-
-        .stat-card .label {
-            font-size: 12px;
-            color: var(--muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        .stat-card .value {
-            font-size: 28px;
-            font-weight: 800;
-            color: #fff;
-        }
-
-        .table-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 18px;
+            backdrop-filter: blur(12px);
+            border-radius: 14px;
+            padding: 18px 20px;
+            position: relative;
             overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            transition: border-color 0.2s;
+        }
+        .stat-card:hover {
+            border-color: var(--border-bright);
         }
 
-        .table-header {
-            padding: 18px 24px;
+        .stat-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .table-header h2 {
+        .stat-val {
+            font-size: 32px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.1;
+        }
+
+        .stat-desc {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 6px;
+        }
+
+        /* Pulse animations */
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .pulse-online {
+            background: var(--emerald);
+            box-shadow: 0 0 10px var(--emerald);
+            animation: pulse-green 1.8s infinite;
+        }
+        .pulse-idle {
+            background: var(--amber);
+            box-shadow: 0 0 8px var(--amber);
+        }
+        .pulse-offline {
+            background: var(--text-dim);
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 960px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .panel-header h2 {
             font-size: 16px;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            width: 180px;
+            transition: border-color 0.2s;
+        }
+        .search-box:focus {
+            border-color: var(--cyan);
+        }
+
+        /* Table */
+        .table-responsive {
+            overflow-x: auto;
         }
 
         table {
@@ -128,240 +272,403 @@
         }
 
         th {
-            background: #0f172a;
-            padding: 12px 20px;
-            color: var(--muted);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-dim);
             font-weight: 600;
-            text-transform: uppercase;
+            padding: 12px 18px;
             font-size: 11px;
+            text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-
-        td {
-            padding: 14px 20px;
             border-bottom: 1px solid var(--border);
         }
 
-        tr:last-child td {
-            border-bottom: none;
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            vertical-align: middle;
         }
 
         tr:hover td {
             background: rgba(255, 255, 255, 0.02);
         }
 
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2));
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 700;
+            color: var(--cyan);
+            font-size: 13px;
             text-transform: uppercase;
         }
 
-        .badge-pending {
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .status-online {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .status-idle {
             background: rgba(245, 158, 11, 0.15);
-            color: #f59e0b;
+            color: #fbbf24;
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
-
-        .badge-paid {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.4);
+        .status-offline {
+            background: rgba(100, 116, 139, 0.15);
+            color: #94a3b8;
+            border: 1px solid rgba(100, 116, 139, 0.3);
         }
 
-        .action-btn {
-            background: #0f172a;
-            border: 1px solid var(--border);
-            color: var(--accent);
-            padding: 6px 12px;
-            border-radius: 8px;
+        .time-box {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-main);
+        }
+
+        .time-ago {
             font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            margin-right: 4px;
-            display: inline-block;
+            color: var(--text-dim);
+            margin-top: 2px;
         }
 
-        .action-btn:hover {
-            border-color: var(--accent);
-            background: #1e293b;
+        /* Activity Feed */
+        .feed-list {
+            padding: 14px 16px;
+            max-height: 520px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .feed-item {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .feed-item:hover {
+            border-color: var(--border);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .feed-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .feed-user {
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .feed-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .feed-action {
+            color: var(--text-muted);
+        }
+
+        .feed-meta {
+            font-size: 10px;
+            color: var(--text-dim);
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Live Sync Indicator */
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--emerald);
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <h1>Pemantauan User Client Realtime</h1>
+                <span class="badge-admin">Admin Only</span>
+            </div>
+            <div class="header-actions">
+                <a href="/pos" class="btn btn-primary">🏪 Buka Kasir POS</a>
+                <a href="/login_code" class="btn btn-ghost">🔑 Kelola Kode Akses</a>
+                <a href="/logout" class="btn btn-danger">🚪 Keluar</a>
+            </div>
+        </header>
 
-<div class="wrapper">
-    <div class="header-bar">
-        <div>
-            <h1>📊 Dashboard Transaksi Coins.ph</h1>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-                {% if is_admin %}
-                    <span style="color:#f59e0b; font-weight:700;">👑 Mode Super Admin</span> — Menampilkan seluruh transaksi semua pengguna
-                {% else %}
-                    <span style="color:#38bdf8; font-weight:600;">👤 User: {{ current_user }}</span> — Menampilkan transaksi Anda
-                {% endif %}
+        <!-- KPI Stat Grid -->
+        <div class="stat-grid">
+            <div class="stat-card" style="border-left: 4px solid var(--emerald);">
+                <div class="stat-header">
+                    <span>User Online Sekarang</span>
+                    <span class="pulse-dot pulse-online"></span>
+                </div>
+                <div class="stat-val" id="countOnline" style="color: var(--emerald);">0</div>
+                <div class="stat-desc">Membuka web triomerak.web.id</div>
+            </div>
+
+            <div class="stat-card" style="border-left: 4px solid var(--amber);">
+                <div class="stat-header">
+                    <span>User Idle (Diam)</span>
+                    <span class="pulse-dot pulse-idle"></span>
+                </div>
+                <div class="stat-val" id="countIdle" style="color: var(--amber);">0</div>
+                <div class="stat-desc">Inaktif > 45 detik</div>
+            </div>
+
+            <div class="stat-card" style="border-left: 4px solid var(--text-dim);">
+                <div class="stat-header">
+                    <span>User Offline</span>
+                    <span class="pulse-dot pulse-offline"></span>
+                </div>
+                <div class="stat-val" id="countOffline" style="color: var(--text-muted);">0</div>
+                <div class="stat-desc">Tutup web / keluar</div>
+            </div>
+
+            <div class="stat-card" style="border-left: 4px solid var(--cyan);">
+                <div class="stat-header">
+                    <span>Total Client Terdaftar</span>
+                    <span>👥</span>
+                </div>
+                <div class="stat-val" id="countTotal" style="color: var(--cyan);">0</div>
+                <div class="stat-desc">Database user profile</div>
+            </div>
+
+            <div class="stat-card" style="border-left: 4px solid var(--blue);">
+                <div class="stat-header">
+                    <span>Jam Server WIB</span>
+                    <span>⏱️</span>
+                </div>
+                <div class="stat-val" id="serverClock" style="color: white; font-size: 24px; padding-top: 4px;">--:--:--</div>
+                <div class="stat-desc" id="serverDate">Memuat waktu...</div>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-            {% if is_admin %}
-            <a href="/login_code" class="nav-btn" style="background: rgba(245,158,11,0.2); border: 1px solid #f59e0b; color: #f59e0b;">⚙️ Panel Admin</a>
-            {% endif %}
-            <a href="/pos" class="nav-btn">⚡ Buka Kasir POS</a>
-            <a href="/logout" class="nav-btn" style="background: rgba(239,68,68,0.2); border: 1px solid #ef4444; color: #ef4444;">🚪 Keluar</a>
+
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Left: User Status Table -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>
+                        <span>👥 Status Live Pengguna Client</span>
+                        <div class="live-indicator">
+                            <span class="pulse-dot pulse-online"></span>
+                            <span>Auto-Sync 4s</span>
+                        </div>
+                    </h2>
+                    <input type="text" id="searchInput" class="search-box" placeholder="Cari username..." oninput="filterTable()">
+                </div>
+
+                <div class="table-responsive">
+                    <table id="userTable">
+                        <thead>
+                            <tr>
+                                <th>User Client</th>
+                                <th>Status</th>
+                                <th>Jam Terakhir Aktif</th>
+                                <th>Halaman Dibuka</th>
+                                <th>Perangkat & IP</th>
+                                <th>Masa Aktif</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 30px;">
+                                    Sedang memuat data aktivitas client...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right: Activity Feed Log -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><span>⚡ Live Feed Aktivitas (Jam Buka)</span></h2>
+                </div>
+                <div class="feed-list" id="feedList">
+                    <div style="text-align: center; color: var(--text-dim); padding: 30px;">
+                        Menunggu log aktivitas masuk...
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="label">Total Pendapatan (Lunas)</div>
-            <div class="value" id="statTotalRevenue" style="color: #10b981;">₱ {{ "%.2f"|format(total_revenue) }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="label">Transaksi Lunas</div>
-            <div class="value" id="statTotalPaid" style="color: #38bdf8;">{{ total_paid }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="label">Menunggu Pembayaran</div>
-            <div class="value" id="statTotalPending" style="color: #f59e0b;">{{ total_pending }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="label">Total Invoice Dibuat</div>
-            <div class="value" id="statTotalOrders">{{ orders|length }}</div>
-        </div>
-    </div>
+    <script>
+        let allUsersData = [];
 
-    <!-- Transactions Table -->
-    <div class="table-card">
-        <div class="table-header">
-            <h2>
-                Riwayat Transaksi Terbaru
-                <span style="font-size: 11px; font-weight: 600; color: #10b981; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulse 2s infinite;"></span>
-                    Live Auto-Sync
-                </span>
-            </h2>
-            <button onclick="refreshDashboard()" class="action-btn">🔄 Refresh Data</button>
-        </div>
+        async function fetchLiveStatus() {
+            try {
+                const res = await fetch('/api/admin/users/live_status');
+                if (!res.ok) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '/pos';
+                    }
+                    return;
+                }
+                const data = await res.json();
+                if (data.success) {
+                    updateDashboard(data);
+                }
+            } catch (err) {
+                console.warn('Sync failed:', err);
+            }
+        }
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Order ID</th>
-                    <th>Nominal</th>
-                    <th>Pelanggan</th>
-                    <th>Catatan</th>
-                    <th>Status</th>
-                    <th>Waktu Dibuat</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="ordersTableBody">
-                {% for o in orders %}
-                <tr>
-                    <td><b>#{{ o.order_id }}</b></td>
-                    <td style="font-weight: 700; color: #fff;">₱ {{ "%.2f"|format(o.amount) }}</td>
-                    <td>{{ o.customer_name or '-' }}</td>
-                    <td>{{ o.note or '-' }}</td>
-                    <td>
-                        {% if o.status == 'PAID' %}
-                        <span class="badge badge-paid">Lunas</span>
-                        {% else %}
-                        <span class="badge badge-pending">Pending</span>
-                        {% endif %}
-                    </td>
-                    <td style="color: var(--muted); font-size: 12px;">{{ o.created_at }}</td>
-                    <td>
-                        <a href="/pay/{{ o.order_id }}" target="_blank" class="action-btn">🔗 Link Pay</a>
-                        {% if o.status != 'PAID' %}
-                        <button onclick="markPaid('{{ o.order_id }}')" class="action-btn" style="color: #10b981;">✓ Lunas</button>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7" style="text-align: center; color: var(--muted); padding: 30px;">
-                        Belum ada transaksi. Silakan buat invoice baru dari Kasir POS.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+        function updateDashboard(data) {
+            // Update Clock & Stats
+            document.getElementById('serverClock').textContent = data.server_time || '--:--:--';
+            document.getElementById('serverDate').textContent = data.server_date || '';
 
-<script>
-    async function refreshDashboard() {
-        try {
-            const res = await fetch('/api/orders');
-            const data = await res.json();
-            if (!data.success) return;
+            document.getElementById('countOnline').textContent = data.stats.online || 0;
+            document.getElementById('countIdle').textContent = data.stats.idle || 0;
+            document.getElementById('countOffline').textContent = data.stats.offline || 0;
+            document.getElementById('countTotal').textContent = data.stats.total_users || 0;
 
-            // Update stats
-            document.getElementById('statTotalRevenue').innerText = '₱ ' + parseFloat(data.total_revenue).toFixed(2);
-            document.getElementById('statTotalPaid').innerText = data.total_paid;
-            document.getElementById('statTotalPending').innerText = data.total_pending;
-            document.getElementById('statTotalOrders').innerText = data.total_orders;
+            allUsersData = data.users || [];
+            renderUserTable(allUsersData);
+            renderFeed(data.activity_feed || []);
+        }
 
-            // Update table
-            const tbody = document.getElementById('ordersTableBody');
-            if (data.orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px;">Belum ada transaksi.</td></tr>';
+        function renderUserTable(users) {
+            const tbody = document.getElementById('userTableBody');
+            const keyword = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+            const filtered = users.filter(u => u.username.toLowerCase().includes(keyword));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 30px;">
+                            ${users.length === 0 ? 'Belum ada akun client yang terdaftar.' : 'Tidak ditemukan user yang cocok.'}
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
-            let html = '';
-            data.orders.forEach(o => {
-                const isPaid = o.status === 'PAID';
-                const statusBadge = isPaid
-                    ? '<span class="badge badge-paid">Lunas</span>'
-                    : '<span class="badge badge-pending">Pending</span>';
-                
-                const actionBtn = !isPaid
-                    ? `<button onclick="markPaid('${o.order_id}')" class="action-btn" style="color:#10b981;">✓ Lunas</button>`
-                    : '';
+            tbody.innerHTML = filtered.map(u => {
+                let badgeClass = 'status-offline';
+                let pulseClass = 'pulse-offline';
+                if (u.status === 'ONLINE') {
+                    badgeClass = 'status-online';
+                    pulseClass = 'pulse-online';
+                } else if (u.status === 'IDLE') {
+                    badgeClass = 'status-idle';
+                    pulseClass = 'pulse-idle';
+                }
 
-                html += `<tr>
-                    <td><b>#${o.order_id}</b></td>
-                    <td style="font-weight:700;color:#fff;">₱ ${parseFloat(o.amount).toFixed(2)}</td>
-                    <td>${o.customer_name || '-'}</td>
-                    <td>${o.note || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td style="color:var(--muted);font-size:12px;">${o.created_at || '-'}</td>
-                    <td>
-                        <a href="/pay/${o.order_id}" target="_blank" class="action-btn">🔗 Link Pay</a>
-                        ${actionBtn}
-                    </td>
-                </tr>`;
-            });
-            tbody.innerHTML = html;
-        } catch(e) {
-            console.warn('[Dashboard Auto-Sync Error]', e);
+                const initial = u.username.charAt(0).toUpperCase();
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="user-pill">
+                                <div class="user-avatar">${initial}</div>
+                                <div>
+                                    <div>${u.username}</div>
+                                    <div style="font-size:11px; color:var(--text-dim); font-weight:normal;">${u.slots_count} Slot Akun</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge ${badgeClass}">
+                                <span class="pulse-dot ${pulseClass}"></span>
+                                ${u.status}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="time-box">${u.last_seen_str}</div>
+                            <div class="time-ago">${u.last_seen_ago}</div>
+                        </td>
+                        <td>
+                            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--cyan);">
+                                ${u.current_page}
+                            </span>
+                        </td>
+                        <td>
+                            <div>${u.device}</div>
+                            <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--text-dim);">${u.ip}</div>
+                        </td>
+                        <td>
+                            <span style="font-size:12px; color:${u.expires_at_str.includes('KEDALUWARSA') ? 'var(--rose)' : 'var(--text-muted)'};">
+                                ${u.expires_at_str}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
-    }
 
-    // Auto-sync every 3 seconds
-    setInterval(refreshDashboard, 3000);
-
-    async function markPaid(orderId) {
-        if (confirm('Tandai order #' + orderId + ' sebagai LUNAS?')) {
-            const res = await fetch('/api/payment/' + orderId + '/pay', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({payment_method: 'Manual Dashboard Confirm'})
-            });
-            const data = await res.json();
-            if (data.success) {
-                refreshDashboard();
-            } else {
-                alert('Gagal update status: ' + data.message);
+        function renderFeed(feeds) {
+            const feedContainer = document.getElementById('feedList');
+            if (!feeds || feeds.length === 0) {
+                feedContainer.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 30px;">Belum ada riwayat aktivitas baru.</div>';
+                return;
             }
-        }
-    }
-</script>
 
+            feedContainer.innerHTML = feeds.map(f => `
+                <div class="feed-item">
+                    <div class="feed-top">
+                        <span class="feed-user">${f.username}</span>
+                        <span class="feed-time">${f.time}</span>
+                    </div>
+                    <div class="feed-action">${f.action}</div>
+                    <div class="feed-meta">
+                        <span>${f.device}</span>
+                        <span>&bull;</span>
+                        <span>${f.ip}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterTable() {
+            renderUserTable(allUsersData);
+        }
+
+        // Fetch immediately and poll every 4 seconds
+        fetchLiveStatus();
+        setInterval(fetchLiveStatus, 4000);
+    </script>
 </body>
 </html>

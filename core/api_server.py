@@ -74,6 +74,82 @@ def save_all_codes(codes):
     with open(ACCESS_CODES_FILE, "w", encoding="utf-8") as f:
         json.dump(codes, f, indent=2, ensure_ascii=False)
 
+
+# ============================================================
+# REALTIME USER CLIENT ACTIVITY TRACKER (ADMIN MONITOR)
+# ============================================================
+_user_activity = {}
+_user_activity_lock = threading.Lock()
+_activity_feed = []
+
+def parse_device_info(ua_string: str) -> str:
+    ua = (ua_string or "").lower()
+    if "android" in ua:
+        return "📱 Android Mobile"
+    if "iphone" in ua or "ipad" in ua:
+        return "🍎 iOS Apple"
+    if "windows" in ua:
+        return "💻 Windows PC"
+    if "macintosh" in ua or "mac os" in ua:
+        return "🍏 Mac OS"
+    if "linux" in ua:
+        return "🐧 Linux"
+    return "🌐 Web Browser"
+
+def get_client_ip(req) -> str:
+    if not req:
+        return "127.0.0.1"
+    cf_ip = req.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip.strip()
+    xff = req.headers.get("X-Forwarded-For")
+    if xff:
+        return xff.split(",")[0].strip()
+    return req.remote_addr or "127.0.0.1"
+
+def record_user_activity(username: str, req, action: str = "Aktivitas"):
+    if not username or username.lower() in ("admin", "superadmin"):
+        return
+    now = time.time()
+    ip = get_client_ip(req)
+    ua_str = req.user_agent.string if req and req.user_agent else ""
+    device = parse_device_info(ua_str)
+    path = req.path if req else "/pos"
+
+    with _user_activity_lock:
+        prev = _user_activity.get(username, {})
+        login_time = prev.get("login_time", now)
+        _user_activity[username] = {
+            "username": username,
+            "last_seen": now,
+            "last_seen_str": datetime.now().strftime("%H:%M:%S"),
+            "last_seen_date": datetime.now().strftime("%d %b %Y"),
+            "login_time": login_time,
+            "login_time_str": datetime.fromtimestamp(login_time).strftime("%H:%M:%S"),
+            "last_page": path,
+            "ip": ip,
+            "device": device,
+            "is_online": True
+        }
+        
+        last_action = prev.get("last_action")
+        last_feed = prev.get("last_feed_time", 0)
+        # Log to feed if action changed or more than 180 seconds since last entry
+        if action != "Heartbeat" or last_action != "Heartbeat" or (now - last_feed > 180):
+            _user_activity[username]["last_action"] = action
+            _user_activity[username]["last_feed_time"] = now
+            _activity_feed.insert(0, {
+                "time": datetime.now().strftime("%H:%M:%S"),
+                "username": username,
+                "action": action,
+                "page": path,
+                "ip": ip,
+                "device": device
+            })
+            if len(_activity_feed) > 50:
+                _activity_feed.pop()
+
+
 def get_user_accounts(username: str, is_admin: bool = False) -> list:
     if is_admin or username in ("admin", "superadmin", ""):
         cfg = load_config()
@@ -183,6 +259,13 @@ def check_auth():
             if request.path.startswith('/api/'):
                 return jsonify({"success": False, "message": "Akun Anda telah kedaluwarsa! Hubungi Admin.", "need_login": True, "expired": True}), 403
             return redirect(url_for('login_code'))
+
+    # Record user activity for live monitoring
+    if session.get("is_authenticated") and session.get("username") and not session.get("is_admin"):
+        page_label = "Membuka POS Kasir" if request.path == "/pos" else (
+            "Membuat Invoice QR" if request.path == "/api/payment/create" else f"Akses {request.path}"
+        )
+        record_user_activity(session.get("username"), request, action=page_label)
 
 # ============================================================
 # STARTUP INIT
@@ -305,8 +388,33 @@ def logout():
     username = session.get("username")
     if username:
         logout_user_wallet(username)
+        if username.lower() not in ("admin", "superadmin"):
+            with _user_activity_lock:
+                if username in _user_activity:
+                    _user_activity[username]["is_online"] = False
+                    _user_activity[username]["last_seen"] = time.time()
+                    _user_activity[username]["last_action"] = "Logout"
+                    _activity_feed.insert(0, {
+                        "time": datetime.now().strftime("%H:%M:%S"),
+                        "username": username,
+                        "action": "Logout / Menutup Sesi",
+                        "page": "/logout",
+                        "ip": get_client_ip(request),
+                        "device": parse_device_info(request.user_agent.string if request.user_agent else "")
+                    })
+                    if len(_activity_feed) > 50:
+                        _activity_feed.pop()
     session.clear()
     return redirect(url_for("login_code"))
+
+
+@app.route("/api/user/heartbeat", methods=["POST", "GET"])
+def api_user_heartbeat():
+    username = session.get("username")
+    if username and username.lower() not in ("admin", "superadmin"):
+        record_user_activity(username, request, action="Heartbeat")
+        return jsonify({"success": True, "status": "online", "time": time.time()})
+    return jsonify({"success": True, "status": "ok"})
 
 
 # ============================================================
@@ -404,26 +512,106 @@ def pos_page():
 
 @app.route("/dashboard")
 def dashboard_page():
+    if not session.get("is_admin"):
+        return redirect(url_for("pos_page"))
     config = load_config()
     username = session.get("username", "admin")
-    is_admin = session.get("is_admin", False)
-    expires_at = session.get("expires_at")
-    orders = get_recent_orders(100, username=None if is_admin else username)
-    total_revenue = sum(o["amount"] for o in orders if o["status"] == "PAID")
-    total_paid = sum(1 for o in orders if o["status"] == "PAID")
-    total_pending = sum(1 for o in orders if o["status"] == "PENDING")
     return render_template(
         "dashboard.html",
-        orders=orders,
-        total_revenue=total_revenue,
-        total_paid=total_paid,
-        total_pending=total_pending,
         config=config,
         current_user=username,
-        is_admin=is_admin,
-        expires_at=expires_at,
+        is_admin=True,
         now=time.time()
     )
+
+
+@app.route("/api/admin/users/live_status", methods=["GET"])
+def api_admin_users_live_status():
+    if not session.get("is_admin"):
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    users = get_all_users()
+    now = time.time()
+    results = []
+    total_online = 0
+    total_idle = 0
+    total_offline = 0
+
+    with _user_activity_lock:
+        for uname, udata in users.items():
+            if uname.lower() in ("admin", "superadmin"):
+                continue
+            act = _user_activity.get(uname, {})
+            last_seen = act.get("last_seen", udata.get("created_at", 0))
+            diff = now - last_seen if last_seen > 0 else 999999
+            
+            is_online_flag = act.get("is_online", False)
+            if is_online_flag and diff < 45:
+                status = "ONLINE"
+                status_color = "success"
+                total_online += 1
+            elif is_online_flag and diff < 180:
+                status = "IDLE"
+                status_color = "warning"
+                total_idle += 1
+            else:
+                status = "OFFLINE"
+                status_color = "muted"
+                total_offline += 1
+
+            if diff < 60:
+                ago_str = f"{int(diff)} detik lalu"
+            elif diff < 3600:
+                ago_str = f"{int(diff // 60)} menit lalu"
+            elif diff < 86400:
+                ago_str = f"{int(diff // 3600)} jam lalu"
+            else:
+                ago_str = f"{int(diff // 86400)} hari lalu"
+
+            exp = udata.get("expires_at")
+            if exp is None:
+                exp_str = "Selamanya (Unlimited)"
+            elif exp < now:
+                exp_str = "KEDALUWARSA"
+            else:
+                rem = exp - now
+                if rem > 86400:
+                    exp_str = f"{int(rem // 86400)}h {int((rem % 86400) // 3600)}j tersisa"
+                else:
+                    exp_str = f"{int(rem // 3600)}j {int((rem % 3600) // 60)}m tersisa"
+
+            results.append({
+                "username": uname,
+                "status": status,
+                "status_color": status_color,
+                "last_seen_str": datetime.fromtimestamp(last_seen).strftime("%H:%M:%S") if last_seen > 0 else "-",
+                "last_seen_date": datetime.fromtimestamp(last_seen).strftime("%d/%m/%Y") if last_seen > 0 else "-",
+                "last_seen_ago": ago_str if last_seen > 0 else "Belum aktif",
+                "login_time_str": act.get("login_time_str", "-"),
+                "current_page": act.get("last_page", "-"),
+                "ip": act.get("ip", "-"),
+                "device": act.get("device", "Unknown"),
+                "expires_at_str": exp_str,
+                "slots_count": len(udata.get("accounts", []))
+            })
+
+        order_map = {"ONLINE": 0, "IDLE": 1, "OFFLINE": 2}
+        results.sort(key=lambda x: (order_map.get(x["status"], 3), x["username"]))
+        feed_copy = list(_activity_feed[:40])
+
+    return jsonify({
+        "success": True,
+        "server_time": datetime.now().strftime("%H:%M:%S"),
+        "server_date": datetime.now().strftime("%d %B %Y"),
+        "stats": {
+            "total_users": len(results),
+            "online": total_online,
+            "idle": total_idle,
+            "offline": total_offline
+        },
+        "users": results,
+        "activity_feed": feed_copy
+    })
 
 
 @app.route("/api/orders", methods=["GET"])
