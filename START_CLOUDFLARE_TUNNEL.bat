@@ -1,5 +1,5 @@
 @echo off
-title COINS.PH GATEWAY - CLOUDFLARE TUNNEL (highcards.my.id)
+title COINS.PH GATEWAY - CLOUDFLARE TUNNEL (triomerak.web.id)
 color 0B
 cd /d "%~dp0"
 
@@ -42,7 +42,7 @@ if not exist "%CF_BIN%" (
 cls
 echo ======================================================================
 echo       COINS.PH PAYMENT GATEWAY - CLOUDFLARE TUNNEL LAUNCHER
-echo                  Target Domain: highcards.my.id
+echo                  Target Domain: triomerak.web.id
 echo ======================================================================
 echo [*] Target Server Lokal  : %TARGET_LOCAL_URL%
 if exist "cloudflare_token.txt" (
@@ -54,11 +54,11 @@ echo ======================================================================
 echo.
 echo Pilih menu yang ingin dijalankan:
 echo.
-echo   [1] Jalankan Tunnel Domain (highcards.my.id)
+echo   [1] Jalankan Tunnel Domain (triomerak.web.id)
 echo   [2] Input / Ganti Cloudflare Tunnel Token
 echo   [3] Jalankan Quick Tunnel Gratis (*.trycloudflare.com)
-echo   [4] Panduan Cara Setup Domain highcards.my.id di Cloudflare
-echo   [5] Buka Browser ke highcards.my.id
+echo   [4] Panduan Cara Setup Domain triomerak.web.id di Cloudflare
+echo   [5] Buka Browser ke triomerak.web.id
 echo   [6] Keluar
 echo.
 
@@ -75,7 +75,7 @@ goto MENU
 :RUN_TOKEN
 cls
 echo ======================================================================
-echo       MENJALANKAN TUNNEL DOMAIN CLOUDFLARE: highcards.my.id
+echo       MENJALANKAN TUNNEL DOMAIN CLOUDFLARE: triomerak.web.id
 echo ======================================================================
 echo.
 
@@ -91,7 +91,7 @@ if "%CF_TOKEN%"=="" (
 )
 
 echo [*] Target Lokal : %TARGET_LOCAL_URL%
-echo [*] Domain Publik: https://highcards.my.id
+echo [*] Domain Publik: https://triomerak.web.id
 echo [*] Menghubungkan tunnel ke Cloudflare Edge Network...
 echo.
 echo [INFO] Jangan tutup jendela ini agar website tetap online!
@@ -155,16 +155,16 @@ pause
 goto MENU
 
 :OPEN_BROWSER
-start https://highcards.my.id/pos
+start https://triomerak.web.id/pos
 goto MENU
 
 :GUIDE
 cls
 echo ======================================================================
-echo       PANDUAN SETUP DOMAIN highcards.my.id DI CLOUDFLARE ZERO TRUST
+echo       PANDUAN SETUP DOMAIN triomerak.web.id DI CLOUDFLARE ZERO TRUST
 echo ======================================================================
 echo.
-echo 1. Pastikan domain highcards.my.id sudah aktif di akun Cloudflare Anda.
+echo 1. Pastikan domain triomerak.web.id sudah aktif di akun Cloudflare Anda.
 echo.
 echo 2. Buka Cloudflare Zero Trust:
 echo    https://one.dash.cloudflare.com/
@@ -180,8 +180,8 @@ echo    - Salin TOKEN yang ada di box instalasi.
 echo    - Masukkan token tersebut ke menu [2] di script ini.
 echo.
 echo 6. Klik "Next" ke tab "Public Hostname Page":
-echo    - Subdomain : (kosongkan jika ingin langsung highcards.my.id, atau isi misal pay)
-echo    - Domain    : highcards.my.id
+echo    - Subdomain : (kosongkan jika ingin langsung triomerak.web.id, atau isi misal pay)
+echo    - Domain    : triomerak.web.id
 echo    - Path      : (kosongkan)
 echo    - Type      : HTTP
 echo    - URL       : %LOCAL_IP%:5000
@@ -189,7 +189,7 @@ echo.
 echo 7. Klik "Save tunnel".
 echo.
 echo Selesai! Setelah itu jalankan menu [1] pada script ini.
-echo Website kasir Anda akan langsung online di https://highcards.my.id
+echo Website kasir Anda akan langsung online di https://triomerak.web.id
 echo ======================================================================
 echo.
 pause
