@@ -906,8 +906,7 @@
             </div>
         </div>
     </div>
-    <div class="nav-right">
-        <div class="rate-pill" onclick="openRateSettingsModal()" title="Klik untuk atur kurs Bitget">
+        <div class="rate-pill" {% if is_admin %}onclick="openRateSettingsModal()" title="Klik untuk atur kurs Bitget" style="cursor:pointer;"{% else %}title="Kurs Real-Time Bitget (PHP/USDC)"{% endif %}>
             <span class="dot-live"></span>
             <span class="rate-text">1 USDC ≈ <b id="liveRateDisplay">60.75</b> PHP</span>
         </div>
@@ -960,7 +959,9 @@
             <div class="drawer-rate-box">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                     <span class="rate-badge-small">🟢 LIVE RATE</span>
+                    {% if is_admin %}
                     <button type="button" class="btn-edit-rate" onclick="closeDrawer(); openRateSettingsModal();">⚙️ Atur Kurs</button>
+                    {% endif %}
                 </div>
                 <div class="drawer-rate-val">
                     1 USDC ≈ <span id="drawerRateDisplay">60.75</span> PHP
@@ -1001,7 +1002,8 @@
             </div>
         </div>
 
-        <!-- Section: Informasi Jaringan Server -->
+        <!-- Section: Informasi Jaringan Server (Khusus Mode Super Admin) -->
+        {% if is_admin %}
         <div class="drawer-section">
             <div class="drawer-section-title">STATUS JARINGAN ENGINE</div>
             <div class="drawer-info-box">
@@ -1010,10 +1012,12 @@
                 <div style="margin-top:4px;"><b>Jaringan Web3:</b> Base USDC, BSC USDT, BSC USDC</div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- RATE SETTINGS MODAL -->
+{% if is_admin %}
+<!-- RATE SETTINGS MODAL (KHUSUS SUPER ADMIN) -->
 <div id="rateSettingsModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:99999;align-items:center;justify-content:center;padding:16px;">
     <div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:22px;max-width:360px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.5);">
         <h3 style="color:#fff;font-size:15px;font-weight:800;margin:0 0 4px;">⚙️ Pengaturan Rate Manual</h3>
@@ -1035,6 +1039,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- WALLET PENGIRIM PANEL (DIBENTANGKAN HORIZONTAL LUAS) -->
 <div class="wallet-horizontal-panel" id="walletSenderCard">

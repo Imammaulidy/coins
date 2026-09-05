@@ -471,7 +471,14 @@ def api_get_rate():
 
 @app.route("/api/rate/set", methods=["POST"])
 def api_set_rate():
-    """Set manual base_rate and buffer dynamically."""
+    """Set manual base_rate and buffer dynamically (Admin only)."""
+    if not session.get("is_admin"):
+        cfg = load_config()
+        server_api_key = cfg.get("server", {}).get("api_key")
+        req_api_key = request.headers.get("X-API-Key") or request.args.get("api_key")
+        if not (server_api_key and req_api_key == server_api_key):
+            return jsonify({"success": False, "message": "Hanya Super Admin yang berhak mengubah kurs."}), 403
+
     data = request.get_json(silent=True) or {}
     base_rate = data.get("base_rate")
     buffer = data.get("buffer", 0.20)
