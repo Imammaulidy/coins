@@ -13,7 +13,7 @@ def make_clean_package():
     zip_path = os.path.join(root_dir, zip_name)
 
     EXCLUDE_DIRS = {".venv", "__pycache__", ".git", "node_modules", ".idea", ".vscode", "scratch", "COINS PAYMENT GATEWAY", "NGROK SAFA"}
-    EXCLUDE_FILES = {"payments.db", "ngrok.exe", "START_NGROK.bat", "START_ALL.bat", "BUAT_PAKET_KOSONGAN.bat", zip_name}
+    EXCLUDE_FILES = {"payments.db", "ngrok.exe", "START_NGROK.bat", "START_ALL.bat", "BUAT_PAKET_KOSONGAN.bat", ".bot.pid", zip_name}
     EXCLUDE_EXTENSIONS = {".pyc", ".log", ".zip", ".tmp"}
 
     CLEAN_CONFIG = {
