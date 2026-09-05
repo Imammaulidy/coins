@@ -23,12 +23,12 @@ fi
 # Cek Python tersedia
 if ! command -v python &> /dev/null; then
     echo "[ERROR] Python belum terinstall."
-    echo "Jalankan dulu: bash termuxsetup.sh"
+    echo "Jalankan dulu: bash setup.sh"
     exit 1
 fi
 
 echo "[*] Menjalankan server dari: $CORE_DIR"
-echo "[*] Kurs Bitget Wallet: 1 USDC = 60.75 PHP (fixed)"
+echo "[*] Kurs Bitget P2P Dynamic Engine Aktif"
 LOCAL_IP=$(python -c "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect(('8.8.8.8',80)); print(s.getsockname()[0]); s.close()" 2>/dev/null || echo "IP-HP")
 
 echo "[*] Akses server di:"

@@ -213,9 +213,10 @@ class TestCoinsPaymentGatewayMulti(unittest.TestCase):
     def test_crc16_correctness(self):
         """Tests CRC16-CCITT calculation matches EMVCo standard"""
         from qr_engine import crc16_ccitt
-        test_str = "00020101021227650014DCPHPHM1XXX0111999644030212639359277982030812345678520460165303608540570.005802PH5911IMAMMAULIDI6006SERANG6304"
+        test_str = "00020101021227590012com.p2pqrpay0111DCPHPHM1XXX02089996440304126391700000015204601653036085402705802PH5910TEST STORE6006Manila62510012com.p2pqrpay051922648472624068712960708123456786304"
         crc = crc16_ccitt(test_str)
         self.assertEqual(len(crc), 4)
+        self.assertEqual(crc, "E807")
         self.assertTrue(all(c in "0123456789ABCDEF" for c in crc))
 
 if __name__ == "__main__":

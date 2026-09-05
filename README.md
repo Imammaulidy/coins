@@ -15,8 +15,8 @@ Payment Gateway mandiri, POS Kasir Web resmi berstandar nasional Filipina (**QR 
     - **User/Member**: Pembuatan QR Ph, Cek Kurs/Kalkulator, Riwayat Transaksi, dan Cek Masa Aktif Akun.
     - **Guest/Expired**: Menu terkunci hingga memasukkan kode akses member yang valid dari Admin.
 - **Dynamic QR Ph Generator Langsung di Chat**:
-  - Pilihan Slot Akun (Slot 1 s/d Slot 4).
-  - Pilihan Nominal Preset Cepat (`₱ 100`, `₱ 200`, `₱ 250`, `₱ 500`, `₱ 1,000`, `₱ 2,500`) + Opsi Input Bebas.
+  - Pilihan Slot Akun (Multi-Slot Akun Coins.ph).
+  - Kontrol Nominal Cepat: `⚡ Generate Base`, `⚡ Generate +0.01` (Auto-Increment), dan `✏️ Set Nominal` (Mendukung Desimal).
   - Opsi Acak Nama Toko (500M+ kombinasi nama autentik Filipina).
   - Foto barcode HD ber-badge resmi InstaPay dikirim langsung ke Telegram.
   - **Auto-Delete Barcode**: Pesan foto barcode lama otomatis dihapus dari chat begitu pembayaran lunas atau expired, digantikan konfirmasi struk pembayaran sukses.
@@ -85,8 +85,8 @@ COINS_PAYMENT_GATEWAY/
 │   └── templates/            # 🖥️ Template HTML (POS, Dashboard, Checkout)
 │
 └── TERMUX/                   # 📁 Script Khusus Android Termux
-    ├── setup.sh              # 🎛️ Menu Interaktif 9-in-1 (Bot, PM2, Deps, Token, Web POS)
-    └── termuxsetup.sh        # ⚡ Helper Inisialisasi Termux
+    ├── run.sh                # 🌐 Launcher POS Server Termux
+    └── setup.sh              # 🎛️ Menu Interaktif 10-in-1 (Bot, PM2, ADB Wifi/Shizuku, Deps, Token, POS)
 ```
 
 ---

@@ -1,4 +1,4 @@
-﻿================================================================
+================================================================
    COINS.PH PAYMENT GATEWAY - PANDUAN PENGGUNAAN LENGKAP
    Coins.ph Dynamic QR Ph & Web3 Multi-Network Wallet
 ================================================================
@@ -65,8 +65,8 @@ BAGIAN 2: CARA INSTALL DAN JALANKAN DI TERMUX (ANDROID)
    $ cp -r /sdcard/COINS_PAYMENT_GATEWAY ~/COINS_PAYMENT_GATEWAY
 4. Masuk ke folder TERMUX:
    $ cd ~/COINS_PAYMENT_GATEWAY/TERMUX
-5. Install dependensi:
-   $ bash termuxsetup.sh
+5. Jalankan menu setup:
+   $ bash setup.sh
 6. Jalankan server:
    $ bash run.sh
 7. Buka browser dan akses kasir via IP:PORT Termux:

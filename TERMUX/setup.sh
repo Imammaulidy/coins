@@ -127,7 +127,7 @@ update_token() {
         return
     fi
 
-    read -p "Masukkan Telegram User ID Admin (opsional, contoh: 6391692514): " NEW_ADMIN_ID
+    read -p "Masukkan Telegram User ID Admin (opsional, contoh: 1234567890): " NEW_ADMIN_ID
     NEW_ADMIN_ID=$(echo "$NEW_ADMIN_ID" | tr -d '[:space:]')
 
     python -c "

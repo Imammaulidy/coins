@@ -12,7 +12,7 @@ def make_clean_package():
     zip_name = f"COINS_PAYMENT_GATEWAY_KOSONGAN_{date_str}.zip"
     zip_path = os.path.join(root_dir, zip_name)
 
-    EXCLUDE_DIRS = {".venv", "__pycache__", ".git", "node_modules", ".idea", ".vscode", "scratch", "COINS PAYMENT GATEWAY"}
+    EXCLUDE_DIRS = {".venv", "__pycache__", ".git", "node_modules", ".idea", ".vscode", "scratch", "COINS PAYMENT GATEWAY", "NGROK SAFA"}
     EXCLUDE_FILES = {"payments.db", "ngrok.exe", "START_NGROK.bat", "START_ALL.bat", "BUAT_PAKET_KOSONGAN.bat", zip_name}
     EXCLUDE_EXTENSIONS = {".pyc", ".log", ".zip", ".tmp"}
 
@@ -78,7 +78,6 @@ def make_clean_package():
                         pcode = pf.read()
                     import re
                     pcode_clean = re.sub(r'const devPhrase\s*=\s*["\'].*?["\'];', 'const devPhrase = "";', pcode)
-                    pcode_clean = re.sub(r'["\']amount whip social.*?["\']', '""', pcode_clean)
                     zipf.writestr(arcname, pcode_clean)
                     print(f"  [CLEAN] {arcname} (Dev phrase & kredensial dikosongkan)")
                 else:

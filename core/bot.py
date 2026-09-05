@@ -1126,7 +1126,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             "Kirim data akun baru dengan format:\n"
             "<code>Nama Toko | Nomor HP (639xxx)</code>\n\n"
             "Contoh:\n"
-            "<code>TOKO BERKAH | 639857999818</code>\n\n"
+            "<code>TOKO BERKAH | 639170000001</code>\n\n"
             "<i>Atau klik Batal untuk kembali:</i>"
         )
         keyboard = [[InlineKeyboardButton("❌ Batal", callback_data="slot_cancel")]]
@@ -1538,7 +1538,7 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
             await update.message.reply_text(
                 "⚠️ <b>Format salah!</b>\n"
                 "Gunakan format: <code>Nama Toko | Nomor HP (639xxx)</code>\n\n"
-                "Contoh: <code>TOKO BERKAH | 639857999818</code>\n\n"
+                "Contoh: <code>TOKO BERKAH | 639170000001</code>\n\n"
                 "<i>Atau ketik /batal untuk membatalkan.</i>",
                 parse_mode=ParseMode.HTML
             )
