@@ -33,6 +33,10 @@ class TestCoinsPaymentGatewayMulti(unittest.TestCase):
     def setUp(self):
         self.config = load_config()
         self.client = app.test_client()
+        with self.client.session_transaction() as sess:
+            sess["is_authenticated"] = True
+            sess["is_admin"] = True
+            sess["username"] = "admin"
         init_db()
         self._temp_coins_added = False
 

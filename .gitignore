@@ -27,5 +27,9 @@ Thumbs.db
 
 # Sensitive local configs
 core/config.json
+core/users.json
+core/access_codes.json
+users.json
+access_codes.json
 .bot.pid
 NGROK SAFA/

@@ -1,10 +1,16 @@
 import os
 import time
 import uuid
+import json
+import hashlib
+import secrets
 import threading
 from io import BytesIO
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, redirect, send_file, url_for, Response
+from flask import (
+    Flask, request, jsonify, render_template, redirect,
+    send_file, url_for, Response, session
+)
 from camera_scanner import camera_scanner
 from qr_engine import (
     load_config,
@@ -25,12 +31,156 @@ from database import (
     get_recent_orders,
     mark_as_paid
 )
-from wallet_manager import rate_engine, wallet_manager
+from wallet_manager import rate_engine, wallet_manager, get_wallet_for_user
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+
+# Session & Auth Security Config
+_init_cfg = load_config()
+app.secret_key = _init_cfg.get("security", {}).get("session_secret", "coins_gateway_secret_key_8899_xyz")
+ADMIN_PASSWORD = _init_cfg.get("security", {}).get("admin_password", "admin123")
+
+USERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.json")
+ACCESS_CODES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access_codes.json")
+
+def get_all_users():
+    if not os.path.exists(USERS_FILE):
+        return {}
+    try:
+        with open(USERS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_all_users(users):
+    with open(USERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(users, f, indent=2, ensure_ascii=False)
+
+def get_all_codes():
+    if not os.path.exists(ACCESS_CODES_FILE):
+        return {}
+    try:
+        with open(ACCESS_CODES_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_all_codes(codes):
+    with open(ACCESS_CODES_FILE, "w", encoding="utf-8") as f:
+        json.dump(codes, f, indent=2, ensure_ascii=False)
+
+def get_user_accounts(username: str, is_admin: bool = False) -> list:
+    if is_admin or username in ("admin", "superadmin", ""):
+        cfg = load_config()
+        return cfg.get("accounts", [])
+    users = get_all_users()
+    if username in users:
+        return users[username].setdefault("accounts", [])
+    return []
+
+def save_user_account(username: str, is_admin: bool, name: str, phone: str, city: str = "Manila", display_name: str = None, slot_id: str = None):
+    if is_admin or username in ("admin", "superadmin", ""):
+        return add_or_update_account(name=name, phone=phone, city=city, display_name=display_name, slot_id=slot_id)
+    users = get_all_users()
+    user_info = users.setdefault(username, {})
+    accounts = user_info.setdefault("accounts", [])
+    if not slot_id:
+        existing_ids = {a.get("id") for a in accounts if a.get("id")}
+        i = 1
+        while f"slot_{i}" in existing_ids:
+            i += 1
+        slot_id = f"slot_{i}"
+    
+    new_acc = {
+        "id": slot_id,
+        "name": name.strip(),
+        "phone": phone.strip(),
+        "account_id": phone.strip(),
+        "bank_bic": "DCPHPHM1XXX",
+        "sub_id": "99964403",
+        "city": city.strip() or "Manila",
+        "mcc": "6016",
+        "currency_code": "608",
+        "terminal_id": "12345678",
+        "active": True
+    }
+    found = False
+    for idx, acc in enumerate(accounts):
+        if acc.get("id") == slot_id:
+            accounts[idx] = new_acc
+            found = True
+            break
+    if not found:
+        accounts.append(new_acc)
+    save_all_users(users)
+    return new_acc
+
+def delete_user_account(username: str, is_admin: bool, slot_id: str) -> bool:
+    if is_admin or username in ("admin", "superadmin", ""):
+        return delete_account(slot_id)
+    users = get_all_users()
+    if username not in users:
+        return False
+    accounts = users[username].get("accounts", [])
+    new_accounts = [a for a in accounts if a.get("id") != slot_id]
+    if len(new_accounts) != len(accounts):
+        users[username]["accounts"] = new_accounts
+        save_all_users(users)
+        return True
+    return False
+
+@app.before_request
+def check_auth():
+    # Allow public endpoints
+    if request.path in ['/login_code', '/logout', '/api/auth/logout']:
+        return
+    if request.path.startswith('/static/'):
+        return
+    if request.path.startswith('/checkout/') or request.path.startswith('/pay/'):
+        return
+    if request.path.startswith('/api/payment/status/'):
+        return
+    if request.path.startswith('/api/qr/image'):
+        return
+
+    # Check API key for server-to-server calls
+    cfg = load_config()
+    server_api_key = cfg.get("server", {}).get("api_key")
+    req_api_key = request.headers.get("X-API-Key") or request.args.get("api_key")
+    if server_api_key and req_api_key == server_api_key:
+        return
+
+    # Check Admin API routes
+    if request.path.startswith('/api/admin'):
+        if not session.get('is_admin'):
+            return jsonify({"success": False, "msg": "Unauthorized: Akses Admin Diperlukan"}), 403
+        return
+
+    # Check Authenticated session
+    if not session.get('is_authenticated') and not session.get('is_admin'):
+        if request.path.startswith('/api/'):
+            return jsonify({"success": False, "message": "Sesi belum login atau kedaluwarsa. Silakan login kembali.", "need_login": True}), 401
+        return redirect(url_for('login_code'))
+
+    # Check live expiration for regular users
+    if not session.get('is_admin') and session.get('username'):
+        username = session.get('username')
+        users = get_all_users()
+        if username not in users:
+            session.clear()
+            if request.path.startswith('/api/'):
+                return jsonify({"success": False, "message": "Akun tidak ditemukan atau telah dihapus.", "need_login": True}), 401
+            return redirect(url_for('login_code'))
+        user_info = users[username]
+        exp = user_info.get('expires_at')
+        if exp is not None and exp < time.time():
+            session.clear()
+            if request.path.startswith('/api/'):
+                return jsonify({"success": False, "message": "Akun Anda telah kedaluwarsa! Hubungi Admin.", "need_login": True, "expired": True}), 403
+            return redirect(url_for('login_code'))
 
 # ============================================================
 # STARTUP INIT
@@ -48,7 +198,7 @@ def generate_order_id() -> str:
 
 
 # ============================================================
-# PAGE ROUTES
+# PAGE ROUTES & AUTH
 # ============================================================
 
 @app.route("/")
@@ -56,16 +206,200 @@ def index():
     return redirect("/pos")
 
 
+@app.route("/login_code", methods=["GET", "POST"])
+def login_code():
+    cfg = load_config()
+    admin_pw = cfg.get("security", {}).get("admin_password", ADMIN_PASSWORD)
+    codes = get_all_codes()
+    users = get_all_users()
+    now = time.time()
+
+    if request.method == "POST":
+        action = request.form.get("action", "login")
+
+        if action == "admin":
+            code = request.form.get("access_code", "").strip()
+            if code == admin_pw:
+                session.clear()
+                session["is_admin"] = True
+                session["is_authenticated"] = True
+                session["username"] = "admin"
+                return redirect(url_for("login_code"))
+            return render_template("login_code.html", error="Password Admin Salah!", codes=codes, users=users, now=now)
+
+        elif action == "register":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "").strip()
+            access_code = request.form.get("access_code", "").strip()
+
+            if not username or not password or not access_code:
+                return render_template("login_code.html", error="Harap isi semua kolom pendaftaran!", register_active=True, codes=codes, users=users, now=now)
+
+            if username in users or username.lower() == "admin":
+                return render_template("login_code.html", error="Username sudah dipakai, pilih yang lain!", register_active=True, codes=codes, users=users, now=now)
+
+            if access_code not in codes:
+                return render_template("login_code.html", error="Kode Akses tidak valid atau tidak terdaftar!", register_active=True, codes=codes, users=users, now=now)
+
+            code_info = codes[access_code]
+            if code_info.get("used_by"):
+                return render_template("login_code.html", error="Kode Akses sudah pernah dipakai oleh user lain!", register_active=True, codes=codes, users=users, now=now)
+
+            # Create User
+            dur_hours = float(code_info.get("duration_hours", 24))
+            user_exp = now + (dur_hours * 3600) if dur_hours > 0 else None
+            users[username] = {
+                "password_hash": hashlib.sha256(password.encode()).hexdigest(),
+                "expires_at": user_exp,
+                "created_at": now,
+                "accounts": []
+            }
+            save_all_users(users)
+
+            code_info["used_by"] = username
+            code_info["used_at"] = now
+            save_all_codes(codes)
+
+            return render_template(
+                "login_code.html",
+                success_msg=f"Pendaftaran akun '{username}' berhasil! Silakan login sekarang.",
+                register_active=False,
+                codes=codes,
+                users=users,
+                now=now
+            )
+
+        elif action == "login":
+            session.clear()
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "").strip()
+
+            if username not in users:
+                return render_template("login_code.html", error="Username tidak ditemukan!", codes=codes, users=users, now=now)
+
+            user_info = users[username]
+            if user_info.get("password_hash") != hashlib.sha256(password.encode()).hexdigest():
+                return render_template("login_code.html", error="Password salah!", codes=codes, users=users, now=now)
+
+            exp = user_info.get("expires_at")
+            if exp is not None and exp < now:
+                return render_template("login_code.html", error="Akun Anda sudah kedaluwarsa! Hubungi Admin.", codes=codes, users=users, now=now)
+
+            session["is_admin"] = False
+            session["is_authenticated"] = True
+            session["username"] = username
+            session["expires_at"] = exp
+            return redirect(url_for("pos_page"))
+
+    return render_template("login_code.html", codes=codes, users=users, now=now)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login_code"))
+
+
+# ============================================================
+# ADMIN ACCESS CODE & USER MANAGEMENT APIS
+# ============================================================
+
+@app.route("/api/admin/generate", methods=["POST"])
+def admin_generate():
+    data = request.get_json(silent=True) or {}
+    code = data.get("code", "").strip()
+    try:
+        duration_hours = float(data.get("duration_hours", 24))
+    except (ValueError, TypeError):
+        duration_hours = 24.0
+
+    if not code:
+        return jsonify({"success": False, "msg": "Kode tidak boleh kosong"}), 400
+
+    codes = get_all_codes()
+    codes[code] = {
+        "created_at": time.time(),
+        "duration_hours": duration_hours,
+        "expires_at": time.time() + (duration_hours * 3600) if duration_hours > 0 else None,
+        "used_by": None
+    }
+    save_all_codes(codes)
+    return jsonify({"success": True, "code": code})
+
+
+@app.route("/api/admin/delete", methods=["POST"])
+def admin_delete():
+    data = request.get_json(silent=True) or {}
+    code = data.get("code", "").strip()
+    codes = get_all_codes()
+    if code in codes:
+        del codes[code]
+        save_all_codes(codes)
+    return jsonify({"success": True})
+
+
+@app.route("/api/admin/delete_user", methods=["POST"])
+def admin_delete_user():
+    data = request.get_json(silent=True) or {}
+    username = data.get("username", "").strip()
+    users = get_all_users()
+    if username in users:
+        del users[username]
+        save_all_users(users)
+    return jsonify({"success": True})
+
+
+@app.route("/api/admin/extend_user", methods=["POST"])
+def admin_extend_user():
+    data = request.get_json(silent=True) or {}
+    username = data.get("username", "").strip()
+    try:
+        duration_hours = float(data.get("duration_hours", 24))
+    except (ValueError, TypeError):
+        duration_hours = 24.0
+
+    users = get_all_users()
+    if username not in users:
+        return jsonify({"success": False, "msg": "User tidak ditemukan"}), 404
+
+    if duration_hours == -1 or duration_hours == -1.0:
+        users[username]["expires_at"] = None
+        save_all_users(users)
+        return jsonify({"success": True, "msg": f"Akun {username} diatur menjadi Permanen (Selamanya)!"})
+
+    current_exp = users[username].get("expires_at")
+    now = time.time()
+    base_time = now if (current_exp is None or current_exp < now) else current_exp
+    users[username]["expires_at"] = base_time + (duration_hours * 3600)
+    save_all_users(users)
+    return jsonify({"success": True, "msg": f"Akun {username} berhasil diperpanjang {duration_hours} jam!"})
+
+
 @app.route("/pos")
 def pos_page():
     config = load_config()
-    return render_template("pos.html", config=config)
+    username = session.get("username", "admin")
+    is_admin = session.get("is_admin", False)
+    expires_at = session.get("expires_at")
+    user_config = dict(config)
+    user_config["accounts"] = get_user_accounts(username, is_admin)
+    return render_template(
+        "pos.html",
+        config=user_config,
+        current_user=username,
+        is_admin=is_admin,
+        expires_at=expires_at,
+        now=time.time()
+    )
 
 
 @app.route("/dashboard")
 def dashboard_page():
     config = load_config()
-    orders = get_recent_orders(100)
+    username = session.get("username", "admin")
+    is_admin = session.get("is_admin", False)
+    expires_at = session.get("expires_at")
+    orders = get_recent_orders(100, username=None if is_admin else username)
     total_revenue = sum(o["amount"] for o in orders if o["status"] == "PAID")
     total_paid = sum(1 for o in orders if o["status"] == "PAID")
     total_pending = sum(1 for o in orders if o["status"] == "PENDING")
@@ -75,7 +409,11 @@ def dashboard_page():
         total_revenue=total_revenue,
         total_paid=total_paid,
         total_pending=total_pending,
-        config=config
+        config=config,
+        current_user=username,
+        is_admin=is_admin,
+        expires_at=expires_at,
+        now=time.time()
     )
 
 
@@ -83,7 +421,9 @@ def dashboard_page():
 def api_get_orders():
     limit = int(request.args.get("limit", 100))
     account_id = request.args.get("account_id")
-    orders = get_recent_orders(limit=limit, account_id=account_id)
+    username = session.get("username", "admin")
+    is_admin = session.get("is_admin", False)
+    orders = get_recent_orders(limit=limit, account_id=account_id, username=None if is_admin else username)
     total_revenue = sum(o["amount"] for o in orders if o["status"] == "PAID")
     total_paid = sum(1 for o in orders if o["status"] == "PAID")
     total_pending = sum(1 for o in orders if o["status"] == "PENDING")
@@ -189,7 +529,9 @@ def api_rate_convert():
 
 @app.route("/api/wallet/connect", methods=["POST"])
 def api_wallet_connect():
-    """Connect wallet using Private Key or Seed Phrase."""
+    """Connect wallet using Private Key or Seed Phrase (Per-User Isolated)."""
+    username = session.get("username", "admin")
+    uwallet = get_wallet_for_user(username)
     data = request.get_json(silent=True) or {}
     method = data.get("method", "private_key")  # "private_key" | "phrase"
     credential = (data.get("credential") or data.get("secret") or "").strip()
@@ -198,9 +540,9 @@ def api_wallet_connect():
         return jsonify({"success": False, "message": "Credential (PK / Phrase) tidak boleh kosong."}), 400
 
     if method == "phrase":
-        result = wallet_manager.connect_phrase(credential)
+        result = uwallet.connect_phrase(credential)
     else:
-        result = wallet_manager.connect_private_key(credential)
+        result = uwallet.connect_private_key(credential)
 
     status_code = 200 if result.get("success") else 400
     return jsonify(result), status_code
@@ -208,20 +550,24 @@ def api_wallet_connect():
 
 @app.route("/api/wallet/disconnect", methods=["POST"])
 def api_wallet_disconnect():
-    wallet_manager.disconnect()
+    username = session.get("username", "admin")
+    uwallet = get_wallet_for_user(username)
+    uwallet.disconnect()
     return jsonify({"success": True, "message": "Wallet berhasil diputus."})
 
 
 @app.route("/api/wallet/status", methods=["GET"])
 def api_wallet_status():
-    """Get current wallet connection status and multi-network balances."""
-    if wallet_manager.is_connected:
-        bal = wallet_manager.get_balance()
+    """Get current wallet connection status and multi-network balances for current user."""
+    username = session.get("username", "admin")
+    uwallet = get_wallet_for_user(username)
+    if uwallet.is_connected:
+        bal = uwallet.get_balance()
         return jsonify({
             "success": True,
             "connected": True,
-            "address": wallet_manager.address,
-            "address_short": f"{wallet_manager.address[:6]}...{wallet_manager.address[-4:]}" if wallet_manager.address else None,
+            "address": uwallet.address,
+            "address_short": f"{uwallet.address[:6]}...{uwallet.address[-4:]}" if uwallet.address else None,
             "networks": bal.get("networks", {}),
             "usdc_balance": bal.get("usdc_balance", 0.0),
             "eth_balance": bal.get("eth_balance", 0.0),
@@ -246,11 +592,13 @@ def api_wallet_status():
 
 @app.route("/api/wallet/balance", methods=["GET"])
 def api_wallet_balance():
-    """Get balances across Base (USDC, ETH) and BSC (USDT, USDC, BNB)."""
+    """Get balances across Base (USDC, ETH) and BSC (USDT, USDC, BNB) for current user."""
+    username = session.get("username", "admin")
+    uwallet = get_wallet_for_user(username)
     network = request.args.get("network")
-    if not wallet_manager.is_connected:
+    if not uwallet.is_connected:
         return jsonify({"success": False, "message": "Wallet belum terkoneksi."}), 200
-    result = wallet_manager.get_balance(network=network)
+    result = uwallet.get_balance(network=network)
     status_code = 200 if result.get("success") else 400
     return jsonify(result), status_code
 
@@ -258,7 +606,7 @@ def api_wallet_balance():
 @app.route("/api/wallet/send", methods=["POST"])
 def api_wallet_send():
     """
-    Send Token on Base (USDC) or BSC (USDT/USDC).
+    Send Token on Base (USDC) or BSC (USDT/USDC) from current user's wallet.
     Body: {
         "to": "0x...",
         "amount": 1.17,
@@ -267,6 +615,8 @@ def api_wallet_send():
         "php_amount": 70.11
     }
     """
+    username = session.get("username", "admin")
+    uwallet = get_wallet_for_user(username)
     data = request.get_json(silent=True) or {}
     to_address = data.get("to", "").strip()
 
@@ -300,7 +650,7 @@ def api_wallet_send():
     except (ValueError, TypeError):
         return jsonify({"success": False, "message": "Nilai amount tidak valid."}), 400
 
-    result = wallet_manager.send_token(to_address=to_address, amount=amount, network=network, token=token)
+    result = uwallet.send_token(to_address=to_address, amount=amount, network=network, token=token)
     status_code = 200 if result.get("success") else 400
     return jsonify(result), status_code
 
@@ -311,13 +661,16 @@ def api_wallet_send():
 
 @app.route("/api/accounts", methods=["GET"])
 def api_get_accounts():
-    config = load_config()
-    return jsonify({"success": True, "accounts": config.get("accounts", [])})
+    username = session.get("username", "admin")
+    is_admin = session.get("is_admin", False)
+    return jsonify({"success": True, "accounts": get_user_accounts(username, is_admin)})
 
 
 @app.route("/api/accounts", methods=["POST"])
 @app.route("/api/account/add", methods=["POST"])
 def api_add_account():
+    username = session.get("username", "admin")
+    is_admin = session.get("is_admin", False)
     data = request.get_json(silent=True) or {}
     name = data.get("name")
     phone = data.get("phone") or data.get("account_id")
@@ -328,7 +681,8 @@ def api_add_account():
     if not name or not phone:
         return jsonify({"success": False, "message": "Nama dan nomor HP wajib diisi."}), 400
 
-    new_acc = add_or_update_account(
+    new_acc = save_user_account(
+        username=username, is_admin=is_admin,
         name=name, phone=phone, city=city,
         display_name=display_name, slot_id=slot_id
     )
@@ -338,7 +692,9 @@ def api_add_account():
 @app.route("/api/accounts/<slot_id>", methods=["DELETE"])
 @app.route("/api/account/<slot_id>", methods=["DELETE"])
 def api_delete_account(slot_id):
-    ok = delete_account(slot_id)
+    username = session.get("username", "admin")
+    is_admin = session.get("is_admin", False)
+    ok = delete_user_account(username=username, is_admin=is_admin, slot_id=slot_id)
     if ok:
         return jsonify({"success": True, "message": f"Slot {slot_id} berhasil dihapus."})
     return jsonify({"success": False, "message": "Slot tidak ditemukan."}), 404
@@ -352,6 +708,8 @@ def api_delete_account(slot_id):
 def api_create_payment():
     data = request.get_json(silent=True) or {}
     config = load_config()
+    username = session.get("username", "admin")
+    is_admin = session.get("is_admin", False)
 
     amount_raw = data.get("amount") or request.form.get("amount")
     if not amount_raw:
@@ -365,7 +723,15 @@ def api_create_payment():
         return jsonify({"success": False, "message": "Nominal tidak valid."}), 400
 
     account_id = data.get("account_id") or request.form.get("account_id")
-    account = get_account(account_id, config)
+    user_accs = get_user_accounts(username, is_admin)
+    account = None
+    if account_id:
+        account = next((a for a in user_accs if a.get("id") == account_id), None)
+    if not account and user_accs:
+        account = user_accs[0]
+    if not account:
+        account = get_account(account_id, config)
+
     if not account:
         return jsonify({"success": False, "message": "Belum ada akun Coins.ph yang terdaftar."}), 400
 
@@ -390,7 +756,8 @@ def api_create_payment():
         account_name=merchant_name or account.get("name", "NAMA AKUN"),
         customer_name=customer_name, customer_phone=customer_phone,
         note=note, callback_url=callback_url,
-        timeout_minutes=timeout_mins, currency="PHP"
+        timeout_minutes=timeout_mins, currency="PHP",
+        username=username
     )
 
     qr_base64 = generate_qr_base64(qr_payload)

@@ -671,3 +671,18 @@ class WalletManager:
 # Global singleton instances
 wallet_manager = WalletManager()
 
+# Multi-user isolated wallet instances
+_user_wallets: Dict[str, WalletManager] = {}
+_wallets_lock = threading.Lock()
+
+def get_wallet_for_user(username: Optional[str] = None) -> WalletManager:
+    """Returns an isolated WalletManager instance for the given username."""
+    user_key = (username or "admin").strip().lower()
+    if user_key in ("admin", "superadmin", ""):
+        return wallet_manager
+    with _wallets_lock:
+        if user_key not in _user_wallets:
+            _user_wallets[user_key] = WalletManager()
+        return _user_wallets[user_key]
+
+

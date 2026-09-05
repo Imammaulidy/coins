@@ -46,9 +46,14 @@ def init_db():
             conn.execute("ALTER TABLE orders ADD COLUMN account_name TEXT")
         except Exception:
             pass
+        try:
+            conn.execute("ALTER TABLE orders ADD COLUMN username TEXT DEFAULT 'admin'")
+        except Exception:
+            pass
 
         conn.execute("CREATE INDEX IF NOT EXISTS idx_order_id ON orders(order_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_status_amount ON orders(status, amount)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_username ON orders(username)")
     conn.close()
 
 def create_order(
@@ -62,7 +67,8 @@ def create_order(
     note: Optional[str] = None,
     callback_url: Optional[str] = None,
     timeout_minutes: int = 15,
-    currency: str = "PHP"
+    currency: str = "PHP",
+    username: str = "admin"
 ) -> Dict[str, Any]:
     now = datetime.now()
     expires_at = now + timedelta(minutes=timeout_minutes)
@@ -71,13 +77,14 @@ def create_order(
     with conn:
         conn.execute("""
             INSERT INTO orders (
-                order_id, account_id, account_name, amount, currency, customer_name, customer_phone,
+                order_id, account_id, account_name, username, amount, currency, customer_name, customer_phone,
                 note, qr_payload, status, callback_url, created_at, expires_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)
         """, (
             order_id,
             account_id,
             account_name or "",
+            username or "admin",
             float(amount),
             currency,
             customer_name or "",
@@ -101,13 +108,19 @@ def get_order(order_id: str) -> Optional[Dict[str, Any]]:
         return dict(row)
     return None
 
-def get_recent_orders(limit: int = 50, account_id: Optional[str] = None) -> List[Dict[str, Any]]:
+def get_recent_orders(limit: int = 50, account_id: Optional[str] = None, username: Optional[str] = None) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
-    if account_id:
-        cursor.execute("SELECT * FROM orders WHERE account_id = ? ORDER BY id DESC LIMIT ?", (account_id, limit))
+    if username and username != "admin":
+        if account_id:
+            cursor.execute("SELECT * FROM orders WHERE username = ? AND account_id = ? ORDER BY id DESC LIMIT ?", (username, account_id, limit))
+        else:
+            cursor.execute("SELECT * FROM orders WHERE username = ? ORDER BY id DESC LIMIT ?", (username, limit))
     else:
-        cursor.execute("SELECT * FROM orders ORDER BY id DESC LIMIT ?", (limit,))
+        if account_id:
+            cursor.execute("SELECT * FROM orders WHERE account_id = ? ORDER BY id DESC LIMIT ?", (account_id, limit))
+        else:
+            cursor.execute("SELECT * FROM orders ORDER BY id DESC LIMIT ?", (limit,))
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
