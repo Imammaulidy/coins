@@ -4,6 +4,7 @@
     "admin_ids": []
   },
   "security": {
+    "admin_password": "admin123",
     "user_sessions": {},
     "access_codes": {}
   },
