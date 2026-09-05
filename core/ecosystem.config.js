@@ -87,6 +87,8 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '500M',
+      restart_delay: 2000,
+      max_restarts: 1000,
       env: {
         PYTHONUNBUFFERED: '1',
         FLASK_ENV: 'production'
@@ -101,6 +103,8 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '500M',
+      restart_delay: 2000,
+      max_restarts: 1000,
       env: {
         PYTHONUNBUFFERED: '1'
       }
@@ -113,7 +117,11 @@ module.exports = {
       interpreter: 'none',
       windowsHide: true,
       autorestart: tunnelAutoRestart,
-      watch: false
+      watch: false,
+      restart_delay: 3000,
+      exp_backoff_restart_delay: 2000,
+      max_restarts: 1000,
+      min_uptime: '3s'
     }
   ]
 };

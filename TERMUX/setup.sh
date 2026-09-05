@@ -54,50 +54,64 @@ banner() {
 show_status() {
     LOCAL_IP=$(get_local_ip)
     
-    # 1. Cek Server POS
-    SERVER_ON=0
-    if command -v pm2 >/dev/null 2>&1 && pm2 jlist 2>/dev/null | grep -q '"name":"coins-server".*"status":"online"'; then
-        SERVER_ON=1
-    elif pgrep -f "api_server.py" >/dev/null 2>&1; then
-        SERVER_ON=2
+    SERVER_STATUS="offline"
+    BOT_STATUS="offline"
+    TUNNEL_STATUS="offline"
+
+    if command -v pm2 >/dev/null 2>&1; then
+        STATUS_VARS=$(pm2 jlist 2>/dev/null | python -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    for p in data:
+        n = p.get('name')
+        s = p.get('pm2_env', {}).get('status', 'offline')
+        if n == 'coins-server':
+            print('SERVER_STATUS=\"' + s + '\"')
+        elif n == 'coins-bot':
+            print('BOT_STATUS=\"' + s + '\"')
+        elif n == 'coins-tunnel':
+            print('TUNNEL_STATUS=\"' + s + '\"')
+except Exception:
+    pass
+" 2>/dev/null)
+        [ -n "$STATUS_VARS" ] && eval "$STATUS_VARS"
     fi
 
-    # 2. Cek Telegram Bot
-    BOT_ON=0
-    if command -v pm2 >/dev/null 2>&1 && pm2 jlist 2>/dev/null | grep -q '"name":"coins-bot".*"status":"online"'; then
-        BOT_ON=1
-    elif pgrep -f "bot.py" >/dev/null 2>&1; then
-        BOT_ON=2
-    fi
-
-    # 3. Cek Cloudflare Tunnel
-    TUNNEL_ON=0
-    if command -v pm2 >/dev/null 2>&1 && pm2 jlist 2>/dev/null | grep -q '"name":"coins-tunnel".*"status":"online"'; then
-        TUNNEL_ON=1
-    elif pgrep -f "cloudflared" >/dev/null 2>&1; then
-        TUNNEL_ON=2
-    fi
-
-    # Tampilkan Indikator Status
-    if [ $SERVER_ON -eq 1 ]; then
+    # 1. Tampilkan Indikator Status Server POS
+    if [ "$SERVER_STATUS" = "online" ]; then
         echo -e "  ● SERVER WEB POS   : ${GREEN}ONLINE (PM2 24/7)${NC} -> http://${LOCAL_IP}:5000/pos"
-    elif [ $SERVER_ON -eq 2 ]; then
+    elif [ "$SERVER_STATUS" = "errored" ]; then
+        echo -e "  ● SERVER WEB POS   : ${RED}ERRORED (PM2 - Cek Log via Menu [5])${NC}"
+    elif [ "$SERVER_STATUS" = "launching" ] || [ "$SERVER_STATUS" = "waiting restart" ]; then
+        echo -e "  ● SERVER WEB POS   : ${YELLOW}RESTARTING... (PM2)${NC}"
+    elif pgrep -f "api_server.py" >/dev/null 2>&1; then
         echo -e "  ● SERVER WEB POS   : ${GREEN}ONLINE (Native PID)${NC} -> http://${LOCAL_IP}:5000/pos"
     else
         echo -e "  ○ SERVER WEB POS   : ${RED}OFFLINE${NC}"
     fi
 
-    if [ $BOT_ON -eq 1 ]; then
+    # 2. Tampilkan Indikator Status Telegram Bot
+    if [ "$BOT_STATUS" = "online" ]; then
         echo -e "  ● TELEGRAM BOT     : ${GREEN}ONLINE (PM2 24/7)${NC}"
-    elif [ $BOT_ON -eq 2 ]; then
+    elif [ "$BOT_STATUS" = "errored" ]; then
+        echo -e "  ● TELEGRAM BOT     : ${RED}ERRORED (PM2 - Cek Log via Menu [5])${NC}"
+    elif [ "$BOT_STATUS" = "launching" ] || [ "$BOT_STATUS" = "waiting restart" ]; then
+        echo -e "  ● TELEGRAM BOT     : ${YELLOW}RESTARTING... (PM2)${NC}"
+    elif pgrep -f "bot.py" >/dev/null 2>&1; then
         echo -e "  ● TELEGRAM BOT     : ${GREEN}ONLINE (Native PID)${NC}"
     else
         echo -e "  ○ TELEGRAM BOT     : ${RED}OFFLINE${NC}"
     fi
 
-    if [ $TUNNEL_ON -eq 1 ]; then
+    # 3. Tampilkan Indikator Status Cloudflare Tunnel
+    if [ "$TUNNEL_STATUS" = "online" ]; then
         echo -e "  ● CLOUDFLARE TUNNEL: ${GREEN}ONLINE (PM2 24/7)${NC} -> https://triomerak.web.id"
-    elif [ $TUNNEL_ON -eq 2 ]; then
+    elif [ "$TUNNEL_STATUS" = "errored" ]; then
+        echo -e "  ● CLOUDFLARE TUNNEL: ${RED}ERRORED (PM2 - Jalankan Ulang via Menu [1])${NC}"
+    elif [ "$TUNNEL_STATUS" = "waiting restart" ] || [ "$TUNNEL_STATUS" = "launching" ]; then
+        echo -e "  ● CLOUDFLARE TUNNEL: ${YELLOW}MENYAMBUNGKAN KEMBALI... (PM2 Auto-Retry)${NC}"
+    elif pgrep -f "cloudflared" >/dev/null 2>&1; then
         echo -e "  ● CLOUDFLARE TUNNEL: ${GREEN}ONLINE (Native PID)${NC} -> https://triomerak.web.id"
     else
         echo -e "  ○ CLOUDFLARE TUNNEL: ${RED}OFFLINE${NC}"

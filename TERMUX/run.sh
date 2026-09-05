@@ -44,6 +44,7 @@ start_all() {
     
     if command -v pm2 >/dev/null 2>&1; then
         echo -e "${GREEN}[*] Menjalankan via PM2 Process Manager (Background 24/7)...${NC}"
+        pm2 delete all >/dev/null 2>&1
         pm2 start core/ecosystem.config.js
         pm2 save >/dev/null 2>&1
         echo ""
