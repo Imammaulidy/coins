@@ -12,8 +12,8 @@ def make_clean_package():
     zip_name = f"COINS_PAYMENT_GATEWAY_KOSONGAN_{date_str}.zip"
     zip_path = os.path.join(root_dir, zip_name)
 
-    EXCLUDE_DIRS = {".venv", "__pycache__", ".git", "node_modules", ".idea", ".vscode", "scratch", "COINS PAYMENT GATEWAY", "NGROK SAFA"}
-    EXCLUDE_FILES = {"payments.db", "ngrok.exe", "START_NGROK.bat", "START_ALL.bat", "BUAT_PAKET_KOSONGAN.bat", ".bot.pid", "users.json", "access_codes.json", zip_name}
+    EXCLUDE_DIRS = {".venv", "__pycache__", ".git", "node_modules", ".idea", ".vscode", "scratch", "COINS PAYMENT GATEWAY", "NGROK SAFA", ".cloudflared"}
+    EXCLUDE_FILES = {"payments.db", "ngrok.exe", "START_NGROK.bat", "START_ALL.bat", "BUAT_PAKET_KOSONGAN.bat", ".bot.pid", "users.json", "access_codes.json", "cloudflared.exe", "cloudflare_token.txt", zip_name}
     EXCLUDE_EXTENSIONS = {".pyc", ".log", ".zip", ".tmp"}
 
     CLEAN_CONFIG = {

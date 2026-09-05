@@ -33,3 +33,6 @@ users.json
 access_codes.json
 .bot.pid
 NGROK SAFA/
+cloudflared.exe
+cloudflare_token.txt
+.cloudflared/
