@@ -52,7 +52,10 @@ if (isWin) {
   }
 } else {
   const termuxBin = path.resolve(__dirname, 'bin', 'cloudflared');
-  if (fs.existsSync(termuxBin)) {
+  const prefixBin = '/data/data/com.termux/files/usr/bin/cloudflared';
+  if (fs.existsSync(prefixBin)) {
+    cloudflaredPath = prefixBin;
+  } else if (fs.existsSync(termuxBin)) {
     cloudflaredPath = termuxBin;
   }
 }

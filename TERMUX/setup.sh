@@ -136,7 +136,7 @@ show_menu() {
     echo ""
     echo -e "${BOLD}PENGATURAN & KONFIGURASI:${NC}"
     echo -e "  ${YELLOW}[7]${NC} ${BOLD}Pengaturan Cloudflare Tunnel (triomerak.web.id)${NC}"
-    echo -e "      Input Token / Pasang cloudflared ARM64 / Login / Quick Tunnel"
+    echo -e "      Input Token triomerak / Pasang cloudflared ARM64 / Quick Tunnel"
     echo ""
     echo -e "  ${YELLOW}[8]${NC} ${BOLD}Masukan atau Update Token Bot & Admin ID${NC}"
     echo -e "      Input Token Bot & User ID Admin, simpan ke core/config.json"
@@ -220,8 +220,26 @@ start_all_in_one() {
 
     LOCAL_IP=$(get_local_ip)
 
+    # Cek ketersediaan token Cloudflare jika ingin menjalankan tunnel triomerak
+    if [ ! -f "$PROJECT_ROOT/cloudflare_token.txt" ]; then
+        echo -e "${YELLOW}[!] Token Cloudflare Tunnel (triomerak.web.id) belum tersimpan.${NC}"
+        echo -e "    Agar domain publik https://triomerak.web.id aktif di Android,"
+        echo -e "    silakan masukkan Cloudflare Tunnel Token Anda sekarang."
+        echo ""
+        read -p "Masukkan Token (atau tekan Enter untuk lewati): " INPUT_CF_TOKEN
+        if [ -n "$INPUT_CF_TOKEN" ]; then
+            CLEAN_TOKEN=$(echo "$INPUT_CF_TOKEN" | sed -e 's/.*--token[ =]*//' -e 's/^[ \t]*//' -e 's/[ \t]*$//' -e 's/["'\'']//g')
+            echo "$CLEAN_TOKEN" > "$PROJECT_ROOT/cloudflare_token.txt"
+            echo -e "${GREEN}[+] Token berhasil disimpan ke cloudflare_token.txt!${NC}"
+        else
+            echo -e "${YELLOW}[*] Melanjutkan tanpa tunnel publik (Server lokal & Bot tetap aktif).${NC}"
+        fi
+        echo ""
+    fi
+
     if command -v pm2 >/dev/null 2>&1; then
         echo -e "${GREEN}[*] Meluncurkan seluruh layanan via PM2 Process Manager (24/7 Auto-Restart)...${NC}"
+        pm2 delete all >/dev/null 2>&1
         pm2 start core/ecosystem.config.js
         pm2 save >/dev/null 2>&1
         echo ""
@@ -308,6 +326,17 @@ start_tunnel() {
         fi
     fi
 
+    # Cek token
+    if [ ! -f "$PROJECT_ROOT/cloudflare_token.txt" ]; then
+        echo -e "${YELLOW}[!] Token Cloudflare Tunnel belum tersimpan.${NC}"
+        read -p "Masukkan Token Zero Trust: " INPUT_CF_TOKEN
+        if [ -n "$INPUT_CF_TOKEN" ]; then
+            CLEAN_TOKEN=$(echo "$INPUT_CF_TOKEN" | sed -e 's/.*--token[ =]*//' -e 's/^[ \t]*//' -e 's/[ \t]*$//' -e 's/["'\'']//g')
+            echo "$CLEAN_TOKEN" > "$PROJECT_ROOT/cloudflare_token.txt"
+            echo -e "${GREEN}[+] Token berhasil disimpan!${NC}"
+        fi
+    fi
+
     LOCAL_IP=$(get_local_ip)
     echo "  [1] Jalankan di Background 24/7 (PM2 Auto-Restart)"
     echo "  [2] Jalankan di Foreground (Tampilan Terminal Terbuka)"
@@ -318,6 +347,7 @@ start_tunnel() {
     case "$t_opt" in
         1)
             if command -v pm2 >/dev/null 2>&1; then
+                pm2 delete coins-tunnel >/dev/null 2>&1
                 pm2 start core/ecosystem.config.js --only coins-tunnel
                 pm2 save >/dev/null 2>&1
                 echo -e "${GREEN}[+] Cloudflare Tunnel aktif via PM2 -> https://triomerak.web.id${NC}"
@@ -345,7 +375,7 @@ start_tunnel() {
             elif [ -f "$HOME/.cloudflared/cert.pem" ]; then
                 "$CF_BIN" tunnel run --url "http://${LOCAL_IP}:5000" triomerak
             else
-                echo -e "${YELLOW}[!] Belum ada token atau sertifikat Cloudflare tersimpan.${NC}"
+                echo -e "${YELLOW}[!] Belum ada token tersimpan.${NC}"
                 echo "Silakan input token melalui Menu [7] terlebih dahulu."
                 read -p "Tekan Enter..."
             fi
@@ -529,20 +559,19 @@ config_cloudflare() {
         fi
         echo ""
         echo "Pilih opsi:"
-        echo "  [1] Input / Ganti Token Cloudflare Zero Trust Manual"
+        echo "  [1] Input / Tempel Token Zero Trust (triomerak.web.id) [Direkomendasikan]"
         echo "  [2] Unduh / Pasang Binary cloudflared ARM64 Otomatis"
-        echo "  [3] Login Cloudflare via Browser (cloudflared tunnel login)"
-        echo "  [4] Uji Coba Quick Tunnel Gratis (*.trycloudflare.com)"
-        echo "  [5] Hapus Token Tersimpan"
+        echo "  [3] Uji Coba Quick Tunnel Gratis (*.trycloudflare.com)"
+        echo "  [4] Hapus Token Tersimpan"
         echo "  [0] Kembali ke Menu Utama"
         echo ""
-        read -p "Pilihan Anda [0-5]: " cf_opt
+        read -p "Pilihan Anda [0-4]: " cf_opt
         case "$cf_opt" in
             1)
                 echo ""
-                echo -e "${CYAN}=== INPUT TOKEN CLOUDFLARE TUNNEL ===${NC}"
-                echo "Salin Token dari dashboard Cloudflare Zero Trust (Tunnels)."
-                echo "(Jika Anda meng-copy seluruh baris perintah 'cloudflared tunnel run --token ...',"
+                echo -e "${CYAN}=== INPUT TOKEN CLOUDFLARE TUNNEL (triomerak.web.id) ===${NC}"
+                echo "Tempel Token Zero Trust Cloudflare Anda di bawah ini."
+                echo "(Jika Anda meng-copy perintah 'cloudflared tunnel run --token ...',"
                 echo " sistem akan otomatis mengekstrak token intinya saja)."
                 echo ""
                 read -p "Masukkan Token: " RAW_TOKEN
@@ -552,6 +581,12 @@ config_cloudflare() {
                     CLEAN_TOKEN=$(echo "$RAW_TOKEN" | sed -e 's/.*--token[ =]*//' -e 's/^[ \t]*//' -e 's/[ \t]*$//' -e 's/["'\'']//g')
                     echo "$CLEAN_TOKEN" > "$PROJECT_ROOT/cloudflare_token.txt"
                     echo -e "${GREEN}[+] Token berhasil disimpan ke cloudflare_token.txt!${NC}"
+                    if command -v pm2 >/dev/null 2>&1; then
+                        pm2 delete coins-tunnel >/dev/null 2>&1
+                        pm2 start core/ecosystem.config.js --only coins-tunnel >/dev/null 2>&1
+                        pm2 save >/dev/null 2>&1
+                        echo -e "${GREEN}[+] Service coins-tunnel di PM2 berhasil direfresh!${NC}"
+                    fi
                 fi
                 read -p "Tekan Enter..."
                 ;;
@@ -565,32 +600,17 @@ config_cloudflare() {
                     install_cloudflared
                     CF_BIN=$(get_cf_bin)
                 fi
-                echo ""
-                echo -e "${CYAN}[*] Membuka URL otorisasi Cloudflare via browser...${NC}"
-                "$CF_BIN" tunnel login
-                if [ -f "$HOME/.cloudflared/cert.pem" ]; then
-                    echo -e "${GREEN}[+] Login Cloudflare berhasil! cert.pem aktif.${NC}"
-                    "$CF_BIN" tunnel create triomerak 2>/dev/null
-                    "$CF_BIN" tunnel route dns -f triomerak triomerak.web.id 2>/dev/null
-                    "$CF_BIN" tunnel route dns -f triomerak www.triomerak.web.id 2>/dev/null
-                    echo -e "${GREEN}[+] Domain triomerak.web.id berhasil di-route ke tunnel!${NC}"
-                fi
-                read -p "Tekan Enter..."
-                ;;
-            4)
-                CF_BIN=$(get_cf_bin)
-                if [ -z "$CF_BIN" ]; then
-                    install_cloudflared
-                    CF_BIN=$(get_cf_bin)
-                fi
                 LOCAL_IP=$(get_local_ip)
                 echo ""
                 echo -e "${CYAN}[*] Menjalankan Quick Tunnel... Tekan CTRL+C untuk berhenti.${NC}"
                 "$CF_BIN" tunnel --url "http://${LOCAL_IP}:5000"
                 read -p "Tekan Enter..."
                 ;;
-            5)
+            4)
                 rm -f "$PROJECT_ROOT/cloudflare_token.txt"
+                if command -v pm2 >/dev/null 2>&1; then
+                    pm2 stop coins-tunnel >/dev/null 2>&1
+                fi
                 echo -e "${GREEN}[+] cloudflare_token.txt berhasil dihapus.${NC}"
                 read -p "Tekan Enter..."
                 ;;
