@@ -99,8 +99,8 @@ COINS_PAYMENT_GATEWAY/
 │   └── templates/               # 🖥️ Template HTML (POS Kasir, Dashboard, Checkout)
 │
 └── TERMUX/                      # 📁 Script Khusus Android Termux
-    ├── run.sh                   # 🌐 Launcher POS Server Termux
-    └── setup.sh                 # 🎛️ Menu Interaktif 10-in-1 (Bot, PM2, ADB Wifi/Shizuku, Deps, Token, POS)
+    ├── run.sh                   # 🚀 Quick Launcher (All-in-One / Server / Tunnel / Stop)
+    └── setup.sh                 # 🎛️ Menu Interaktif Lengkap (All-in-One, Server, Tunnel triomerak, Bot, PM2, Deps)
 ```
 
 ---
@@ -108,14 +108,8 @@ COINS_PAYMENT_GATEWAY/
 ## 💻 Panduan Menjalankan di PC / Windows
 
 ### 1. Menjalankan Semua Layanan Sekaligus (All-in-One 24 Jam):
-Cukup double-click file:
-```text
-START_SERVER.bat
-```
-Pilih opsi **`[1]`** (atau tekan **Enter**).
-
-Sistem akan otomatis:
-1. Memulai **Web Server POS** (`coins-server`).
+Jalankan file **`START_SERVER.bat`**, lalu pilih opsi **`[1]`**. Sistem akan otomatis:
+1. Memulai **Web POS Server** (`coins-server`) pada port `5000`.
 2. Memulai **Bot Telegram** (`coins-bot`).
 3. Memulai **Cloudflare Tunnel** (`coins-tunnel`).
 4. Menyimpan status proses ke daemon PM2 (`pm2 save`).
@@ -134,7 +128,7 @@ Sistem akan otomatis:
 
 ## 📱 Panduan Lengkap Android (Termux)
 
-Panduan instalasi mandiri dari awal (*fresh install*), konfigurasi bot, hingga menjalankan bot 24/7 di perangkat Android menggunakan **Termux**.
+Panduan instalasi mandiri dari awal (*fresh install*), konfigurasi bot, hingga menjalankan bot, server, dan Cloudflare Tunnel (`triomerak.web.id`) 24/7 di perangkat Android menggunakan **Termux**.
 
 > [!IMPORTANT]
 > **Gunakan Termux Versi Resmi**:
@@ -146,12 +140,24 @@ Panduan instalasi mandiri dari awal (*fresh install*), konfigurasi bot, hingga m
 pkg update -y && pkg install -y git python && git clone https://github.com/Imammaulidy/coins.git && cd coins && bash TERMUX/setup.sh
 ```
 
+### 🚀 Quick Launcher Termux (`TERMUX/run.sh`):
+- `bash TERMUX/run.sh` : Menu cepat interaktif (All-in-One, Server, Tunnel, Stop)
+- `bash TERMUX/run.sh --all` : Langsung jalankan All-in-One di background 24/7 via PM2
+- `bash TERMUX/run.sh --server` : Jalankan Web POS Server saja (Port 5000 foreground)
+- `bash TERMUX/run.sh --tunnel` : Jalankan Cloudflare Tunnel saja (`triomerak.web.id`)
+- `bash TERMUX/run.sh --stop` : Hentikan seluruh layanan yang sedang berjalan
+
 ### 🎛️ Menu Interaktif Termux (`TERMUX/setup.sh`):
-1. **Pilihan `[3]`**: Install Dependencies (Python + Android Tools + rish).
-2. **Pilihan `[4]`**: Masukkan Token Bot Telegram & Admin ID.
-3. **Pilihan `[8]`**: Setup PM2 (NodeJS & PM2 Auto-Restart di Termux).
-4. **Pilihan `[5]`**: Jalankan Bot Telegram di background 24/7.
-5. **Pilihan `[9]`**: Jalankan Web POS Kasir (Port 5000).
+1. **Pilihan `[1]`**: **JALANKAN ALL-IN-ONE (Server + Bot + Tunnel 24/7 via PM2)** *(Rekomendasi Utama)*.
+2. **Pilihan `[2]`**: Jalankan Server Web POS Kasir (Port 5000 - Background/Foreground).
+3. **Pilihan `[3]`**: Jalankan Cloudflare Tunnel `triomerak.web.id` (Background/Foreground/Quick).
+4. **Pilihan `[4]`**: Jalankan Bot Telegram Saja (PM2 / Background).
+5. **Pilihan `[5]`**: Lihat Log Realtime (Semua / Server / Bot / Tunnel via `pm2 logs`).
+6. **Pilihan `[6]`**: Stop Layanan (Semua / Pilihan).
+7. **Pilihan `[7]`**: Pengaturan Cloudflare Tunnel (Pasang ARM64 binary otomatis, Input Token Zero Trust, Login Browser, Quick Tunnel).
+8. **Pilihan `[8]`**: Masukkan atau Update Token Bot & Admin ID (`core/config.json`).
+9. **Pilihan `[9]`**: Mode Automasi Android (ADB Wifi Wireless Debugging / Shizuku rish).
+10. **Pilihan `[10]`**: Setup Lengkap Dependensi Termux (Python, NodeJS, PM2, build tools, & cloudflared ARM64).
 
 ---
 
