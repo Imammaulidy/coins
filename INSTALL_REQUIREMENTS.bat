@@ -38,6 +38,25 @@ if exist "core\requirements-desktop.txt" (
 )
 if errorlevel 1 goto ERROR_PIP
 
+:: 3. Cek / Install Node.js PM2 Process Manager
+echo.
+echo [3/3] Memeriksa PM2 Process Manager (Background 24/7)...
+where pm2 >nul 2>&1
+if errorlevel 1 (
+    where npm >nul 2>&1
+    if not errorlevel 1 (
+        echo [*] Menginstall PM2 dan pm2-windows-startup via npm...
+        call npm install -g pm2 pm2-windows-startup
+        call pm2-startup install >nul 2>&1
+    ) else if exist "C:\Program Files\nodejs\npm.cmd" (
+        echo [*] Menginstall PM2 dan pm2-windows-startup...
+        call "C:\Program Files\nodejs\npm.cmd" install -g pm2 pm2-windows-startup
+        call "%APPDATA%\npm\pm2-startup.cmd" install >nul 2>&1
+    )
+) else (
+    echo [OK] PM2 sudah terpasang dan siap digunakan.
+)
+
 echo.
 echo ======================================================================
 echo   [BERHASIL] SEMUA REQUIREMENT TELAH SELESAI DIINSTALL!

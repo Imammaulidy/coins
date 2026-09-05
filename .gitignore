@@ -36,3 +36,4 @@ NGROK SAFA/
 cloudflared.exe
 cloudflare_token.txt
 .cloudflared/
+core/bin/

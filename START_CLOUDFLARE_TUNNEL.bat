@@ -16,7 +16,10 @@ if "%LOCAL_IP%"=="" set LOCAL_IP=192.168.1.20
 set TARGET_LOCAL_URL=http://%LOCAL_IP%:5000
 
 :: 2. Deteksi cloudflared.exe
-set CF_BIN=cloudflared.exe
+set CF_BIN=core\bin\cloudflared.exe
+if not exist "%CF_BIN%" (
+    if exist "cloudflared.exe" set CF_BIN=cloudflared.exe
+)
 if not exist "%CF_BIN%" (
     where cloudflared >nul 2>&1
     if not errorlevel 1 (
@@ -26,14 +29,16 @@ if not exist "%CF_BIN%" (
         echo       COINS.PH PAYMENT GATEWAY - CLOUDFLARE TUNNEL LAUNCHER
         echo ======================================================================
         echo [*] Mengunduh cloudflared.exe resmi dari Cloudflare GitHub...
-        powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe', 'cloudflared.exe')"
-        if not exist "cloudflared.exe" (
+        if not exist "core\bin" mkdir "core\bin"
+        powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe', 'core\bin\cloudflared.exe')"
+        if not exist "core\bin\cloudflared.exe" (
             color 0C
             echo [-] Gagal mengunduh cloudflared.exe secara otomatis!
-            echo     Silakan unduh manual dan letakkan cloudflared.exe di folder ini.
+            echo     Silakan unduh manual dan letakkan di core\bin\cloudflared.exe.
             pause
             exit /b 1
         )
+        set CF_BIN=core\bin\cloudflared.exe
         echo [+] cloudflared.exe berhasil diunduh dan siap digunakan.
     )
 )
